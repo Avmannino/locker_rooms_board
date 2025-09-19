@@ -1,0 +1,166 @@
+:root{
+  --bg: #0b1b2b;          /* deep navy */
+  --card: #12263a;        /* slightly lighter */
+  --text: #f2f6fb;        /* off-white */
+  --muted: #b8c4d4;       /* soft gray-blue */
+  --accent-now: #3ddc97;  /* green */
+  --accent-next: #4da3ff; /* blue */
+  --danger: #ff6b6b;
+  --rink-a: #4da3ff;
+  --rink-b: #3ddc97;
+  --rink-c: #f7b500;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  height: 100%;
+}
+
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.app-header{
+  display: grid;
+  /* 3 columns: left (logo auto), center (title 1fr), right (clock auto) */
+  grid-template-columns: auto 1fr auto;
+  gap: 26px;
+  padding: 0px 32px;
+  border-bottom: 2px solid #1f3550;
+  text-align: center;
+  align-items: center;
+}
+
+
+.title{ font-size: 64px; line-height: 1; margin: 0; font-weight: 800; letter-spacing: 0.5px; }
+.subtitle{ margin-top: 6px; color: var(--muted); font-size: 24px; font-weight: 600; }
+
+.status{ text-align: right; }
+#clock{ font-size: 40px; font-weight: 800; }
+.updated{ color: var(--muted); font-size: 26px; margin-top: 6px; }
+
+.split{
+  display:grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  padding: 24px 32px; flex: 1; min-height: 0;
+}
+
+.panel{
+  background: var(--card); border-radius: 16px; padding: 18px 18px 12px; display:flex; flex-direction: column; min-height: 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.panel-header{
+  display:flex; align-items:center; justify-content: space-between;
+  padding: 10px 8px 14px 8px; border-bottom: 1px solid #1e3953; margin-bottom: 6px;
+}
+
+.panel h2{ margin:0; font-size: 42px; letter-spacing: .3px; }
+.muted{ color: var(--muted); font-weight: 700; font-size: 24px; }
+
+.chip{
+  display:inline-block; padding: 8px 12px; border-radius: 999px; font-weight: 800; letter-spacing:.3px;
+  font-size: 34px;
+}
+.chip-now{ background: rgba(61,220,151,.18); border: 2px solid var(--accent-now); color: var(--accent-now); }
+.chip-next{ background: rgba(255, 77, 77, 0.58); border: 2px solid var(--accent-next); color: var(--accent-next); }
+
+.list{
+  list-style:none; margin: 10px 0 0; padding: 0; overflow: hidden auto; /* scroll if super long */
+}
+.list li{
+  display:grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+  padding: 14px 12px; border-bottom: 1px dashed #23415d;
+  font-size: 32px; line-height: 1.2;
+}
+
+.item{
+  display:flex; flex-direction: column; gap: 6px; min-width:0;
+}
+.team{ font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta{ color: var(--muted); font-size: 20px; }
+
+.badge{
+  font-size: 40px; padding: 8px 14px; border-radius: 10px; font-weight: 800; letter-spacing:.4px; white-space: nowrap;
+  border: 2px solid #2d4f74; background:#0f2135;
+}
+
+.badge.room{ border-color:#4572a1; }
+.badge.time{ border-color:#4a5869; }
+.badge.warn{ border-color: var(--danger); color: var(--danger); }
+
+.empty{
+  margin: 24px; padding: 18px; border: 2px dashed #365c87; border-radius: 12px; color: var(--muted);
+  font-size: 32px; text-align:center;
+}
+
+.footer{
+  display:flex; justify-content: space-between; align-items:center;
+  padding: 10px 24px 20px; color: var(--muted); border-top: 2px solid #1f3550;
+  font-size: 28px;
+}
+.legend .dot{
+  display:inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; transform: translateY(1px);
+}
+.dot-a{ background: var(--rink-a); }
+.dot-b{ background: var(--rink-b); }
+.dot-c{ background: var(--rink-c); }
+.legend span{ margin-right: 18px; }
+
+/* Big TV scaling for 1080p */
+@media (min-width: 1600px){
+  .title{ font-size: 84px; }
+  #clock{ font-size: 48px; }
+  .panel h2{ font-size: 48px; }
+  .list li{ font-size: 36px; }
+}
+
+.logo img{
+  height: 72px;             /* tweak if you want it larger */
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.3));
+}
+
+.brand{
+  text-align: center;        /* centers the title in the middle column */
+}
+
+.title{
+  font-size: 84px;
+  line-height: 1;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.57x;
+  text-align: center;
+}
+
+.subtitle{
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.status{
+  text-align: right;
+}
+
+#clock{ font-size: 40px; font-weight: 800; }
+.updated{ color: var(--muted); font-size: 26px; margin-top: 6px; }
+
+/* Big TV scaling for 1080p+ */
+@media (min-width: 1600px){
+  .logo img{ height: 250px; }
+  .title{ font-size: 104px; }
+  #clock{ font-size: 48px; }
+}
+
+
+/* Overscan safety */
+#app{ padding: 0 20px; }
+
+
