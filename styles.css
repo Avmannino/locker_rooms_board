@@ -27,7 +27,8 @@ html, body {
 .app-header{
   display: grid;
   /* 3 columns: left (logo auto), center (title 1fr), right (clock auto) */
-  grid-template-columns: auto 1fr auto;
+  /* Using minmax to ensure equal side widths for perfect centering */
+  grid-template-columns: minmax(200px, auto) 1fr minmax(200px, auto);
   gap: 26px;
   padding: 0px 32px;
   border-bottom: 2px solid #1f3550;
@@ -36,7 +37,7 @@ html, body {
 }
 
 
-.title{ font-size: 64px; line-height: 1; margin: 0; font-weight: 800; letter-spacing: 0.5px; }
+/* Removed duplicate .title rule - see consolidated version below */
 .subtitle{ margin-top: 6px; color: var(--muted); font-size: 24px; font-weight: 600; }
 
 .status{ text-align: right; }
@@ -134,7 +135,7 @@ html, body {
   line-height: 1;
   margin: 0;
   font-weight: 800;
-  letter-spacing: 0.57x;
+  letter-spacing: 0.5px;
   text-align: center;
 }
 

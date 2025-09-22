@@ -244,14 +244,14 @@ function createRow(ev, context /* "now" | "next" */) {
   team.textContent = ev.team || ev.titleRaw;
   left.appendChild(team);
 
-  // Meta line: rink + titleRaw if you prefer
-  const meta = document.createElement("div");
-  meta.className = "meta";
-  const rinkBadge = document.createElement("span");
-  rinkBadge.className = `dot ${rinkDotClass(ev.rink)}`;
-  meta.appendChild(rinkBadge);
-  meta.append(` Rink ${ev.rink}`);
-  left.appendChild(meta);
+  // Meta line: removed rink display since there's only one rink
+  // const meta = document.createElement("div");
+  // meta.className = "meta";
+  // const rinkBadge = document.createElement("span");
+  // rinkBadge.className = `dot ${rinkDotClass(ev.rink)}`;
+  // meta.appendChild(rinkBadge);
+  // meta.append(` Rink ${ev.rink}`);
+  // left.appendChild(meta);
 
   // Room badge
 const room = document.createElement("div");
