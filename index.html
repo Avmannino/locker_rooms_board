@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Locker Rooms — Now / Next</title>
+  <title>Locker Rooms</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- TV-safe fonts; you can swap to your brand later -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,24 +12,23 @@
 <body>
   <div id="app">
     <header class="app-header">
-  <!-- LEFT: Logo -->
-  <div class="logo">
-    <img src="./assets/logo.png" alt="Wings Arena" />
-  </div>
+      <!-- LEFT: Logo -->
+      <div class="logo">
+        <img src="./assets/logo.png" alt="Wings Arena" />
+      </div>
 
-  <!-- CENTER: Title/Sub -->
-  <div class="brand">
-    <h1 class="title">LOCKER ROOMS</h1>
-    <!-- <div class="subtitle">Now / Next</div> -->
-  </div>
+      <!-- CENTER: Title/Sub -->
+      <div class="brand">
+        <h1 class="title">LOCKER ROOMS</h1>
+        <!-- <div class="subtitle">Now / Next</div> -->
+      </div>
 
-  <!-- RIGHT: Clock + Updated -->
-  <div class="status">
-    <div id="clock" aria-live="polite">--:--</div>
-    <div id="updated" class="updated">Updated: …</div>
-  </div>
-</header>
-
+      <!-- RIGHT: Clock + Updated -->
+      <div class="status">
+        <div id="clock" aria-live="polite">--:--</div>
+        <div id="updated" class="updated">Updated: …</div>
+      </div>
+    </header>
 
     <main class="split">
       <section class="panel panel-now">
@@ -38,16 +37,16 @@
           <span class="chip chip-now">In Progress</span>
         </div>
         <ul id="nowList" class="list" role="list"></ul>
-        <div id="nowEmpty" class="empty" hidden>No teams are in rooms right now.</div>
+        <div id="nowEmpty" class="empty" hidden>No Teams Right Now</div>
       </section>
 
       <section class="panel panel-next">
         <div class="panel-header">
-          <h2>Next <span class="muted">(within 90 min)</span></h2>
-          <span class="chip chip-next">Up Next</span>
+          <h2>UPCOMING <span id="nextDate" class="muted"></span></h2>
+          <span class="chip chip-next">Upcoming</span>
         </div>
         <ul id="nextList" class="list" role="list"></ul>
-        <div id="nextEmpty" class="empty" hidden>No upcoming teams in the next 90 minutes.</div>
+        <div id="nextEmpty" class="empty" hidden>No more teams scheduled today.</div>
       </section>
     </main>
 
