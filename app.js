@@ -46,31 +46,50 @@ function fmtUpdated(now = new Date(), tz = FACILITY_TIMEZONE) {
   return new Intl.DateTimeFormat(undefined, opts).format(now);
 }
 
+/************************************
+ * LOCKER / RINK PARSERS
+ ************************************/
+// NEW: More robust locker parser for Adult League formats
 function parseLocker(text) {
   if (!text) return null;
 
-  // 1) Prefer explicit "Locker Room(s): ..." or "Room(s): ..."
-  //    This captures the remainder of the line, then extracts entries like:
-  //    1, 3 (Red), A1, 4 (CT Beer), etc.
-  const reList = /\b(?:locker\s*rooms?|rooms?)\b\s*:?\s*([^\n\r;]*)/i;
-  const m = text.match(reList);
-  if (m) {
-    const segment = (m[1] || "")
-      // normalize separators to a single pipe so we don't split inside parentheses
-      .replace(/[,/]+/g, "|");
+  // 0) HOME / AWAY pairs: "Home: 1  Away: 3" or "Away-4, Home 2"
+  const mHome = text.match(/\bhome\b\s*[:#-]?\s*([A-Za-z0-9\-]+)/i);
+  const mAway = text.match(/\baway\b\s*[:#-]?\s*([A-Za-z0-9\-]+)/i);
+  if (mHome || mAway) {
+    const parts = [];
+    if (mHome && mHome[1]) parts.push(`${mHome[1]} (Home)`);
+    if (mAway && mAway[1]) parts.push(`${mAway[1]} (Away)`);
+    if (parts.length) return parts.join(", ");
+  }
 
-    // Match "token (optional note)" groups; tokens can be numbers/letters/dashes
+  // 1) Explicit labels: "Locker Room(s): ..." | "Locker Rooms - ..." | "Lockers ..." | "Rooms ..."
+  //    Also supports "AL Rooms" (Adult League shorthand)
+  const reList = /\b(?:al\s*rooms?|locker\s*rooms?|lockers?|rooms?)\b\s*[:\-]?\s*([^\n\r;]+)/i;
+  const listMatch = text.match(reList);
+  if (listMatch) {
+    let segment = (listMatch[1] || "");
+
+    // Normalize common separators to a single pipe so we can split safely
+    // (&, +, " and ", commas, slashes)
+    segment = segment
+      .replace(/\s+(and)\s+/gi, "|")
+      .replace(/[&+]/g, "|")
+      .replace(/[,/]/g, "|")
+      .replace(/\s*\|\s*/g, "|"); // collapse spaces around pipes
+
+    // Extract entries like: 1, 3 (Red), A1, 4 (CT Beer)
     const entries = [];
     const reEntry = /([A-Za-z0-9\-]+(?:\s*\([^)]+\))?)/g;
     let em;
     while ((em = reEntry.exec(segment)) !== null) {
-      const val = em[1].trim();
+      const val = (em[1] || "").trim();
       if (val) entries.push(val);
     }
     if (entries.length) return entries.join(", ");
   }
 
-  // 2) Fallback simple single-room forms: "Locker 3", "Room 12", "LR 2", "LKR-A"
+  // 2) Simple single-room forms: "Locker 3", "Room 12", "LR 2", "LKR-A"
   const simple1 = /\b(?:locker|room)\b\s*#?\s*([A-Za-z0-9\-]+(?:\s*\([^)]+\))?)/i.exec(text);
   if (simple1) return simple1[1];
 
@@ -90,17 +109,9 @@ function parseRink(text) {
 
 function cleanTeamName(title) {
   if (!title) return "";
-  // First, remove known locker suffixes if present
-  const withoutLocker = title.replace(
-    /\s*[-–—]\s*(locker(?:\s*room)?|room|rm|lr|lkr)\b.*$/i,
-    ""
-  );
-  // Then trim anything after the first spaced dash ( -, – or — )
-  // e.g. "Bantam Greenwich Skating Club - Private" -> "Bantam Greenwich Skating Club"
-  // Keeps hyphenated words like "U-12" because it requires spaces around the dash.
-  return withoutLocker.split(/\s[-–—]\s/)[0].trim();
+  // Remove trailing " - Locker 3" patterns to keep team name clean
+  return title.replace(/\s*[-–—]\s*(locker(?:\s*room)?|room|rm|lr|lkr)\b.*$/i, "").trim();
 }
-
 
 /************************************
  * FETCHERS — JSON (gviz) & CSV
@@ -288,6 +299,7 @@ function createRow(ev, context /* "now" | "next" */) {
     }
   }
 
+  // Put time first, then team, then room
   li.appendChild(time);
   li.appendChild(left);
   li.appendChild(room);

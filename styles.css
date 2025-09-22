@@ -77,7 +77,6 @@ body {
 }
 
 
-
 .updated {
   color: var(--muted);
   font-size: 26px;
@@ -175,7 +174,7 @@ body {
 
 .team {
   font-weight: 800;
-  font-size: 50px;
+  font-size: 35px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -290,7 +289,7 @@ body {
 /* centers the title in the middle column */
 
 .title {
-  font-size: 84px;
+  font-size: 44px;
   line-height: 1;
   margin: 0;
   font-weight: 800;
