@@ -44,7 +44,7 @@ html, body {
 .updated{ color: var(--muted); font-size: 26px; margin-top: 6px; }
 
 .split{
-  display:grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  display:grid; grid-template-rows: 1fr 1fr; gap: 24px;
   padding: 24px 32px; flex: 1; min-height: 0;
 }
 
