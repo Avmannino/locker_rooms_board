@@ -51,15 +51,42 @@ function parseLocker(text) {
   if (!text) return null;
 
   // 1) Handle explicit "Locker Room(s): ..." or "Room(s): ..."
-  //    Captures the rest of the line, then tokenizes on | , / or spaces.
+  //    Captures the rest of the line, preserving parenthetical color designations
   const reList = /\b(?:locker\s*rooms?|rooms?)\b\s*:?\s*([^\n\r;]*)/i;
   const m = text.match(reList);
   if (m) {
-    const tokens = (m[1] || "")
-      .replace(/[^\w|\-\/, ]+/g, "")            // keep letters/numbers and separators
-      .split(/[\s|,\/]+/)                       // split on space, |, , or /
-      .filter(Boolean);
-    if (tokens.length) return tokens.join(", "); // e.g., "1, 2"
+    const content = m[1] || "";
+    
+    // Handle cases like "1 | 3 (Red)" - preserve the color designation with the last number
+    if (content.includes('(') && content.includes(')')) {
+      // Extract the color designation
+      const colorMatch = content.match(/\(([^)]+)\)/);
+      const colorDesignation = colorMatch ? ` (${colorMatch[1]})` : '';
+      
+      // Remove the color designation temporarily for parsing numbers
+      const withoutColor = content.replace(/\s*\([^)]+\)\s*/g, '');
+      
+      // Parse the room numbers
+      const tokens = withoutColor
+        .replace(/[^\w|\-\/, ]+/g, "")            // keep letters/numbers and separators
+        .split(/[\s|,\/]+/)                       // split on space, |, , or /
+        .filter(Boolean);
+      
+      if (tokens.length) {
+        // Add color designation to the last room number
+        if (colorDesignation && tokens.length > 0) {
+          tokens[tokens.length - 1] += colorDesignation;
+        }
+        return tokens.join(", ");
+      }
+    } else {
+      // Original logic for cases without color designations
+      const tokens = content
+        .replace(/[^\w|\-\/, ]+/g, "")            // keep letters/numbers and separators
+        .split(/[\s|,\/]+/)                       // split on space, |, , or /
+        .filter(Boolean);
+      if (tokens.length) return tokens.join(", "); // e.g., "1, 2"
+    }
   }
 
   // 2) Fallback simple forms: "Locker 3", "Room 12", "LR 2", "LKR-A"
