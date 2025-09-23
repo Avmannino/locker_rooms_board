@@ -41,13 +41,13 @@ body {
   display: grid;
   /* 3 columns: left (logo auto), center (title 1fr), right (clock auto) */
   /* Using minmax to ensure equal side widths for perfect centering */
-  grid-template-columns: minmax(240px, auto) 1fr minmax(240px, auto);
-  gap: 32px;
-  padding: 12px 40px;
+  grid-template-columns: minmax(220px, auto) 1fr minmax(220px, auto);
+  gap: 28px;
+  padding: 10px 32px;
   border-bottom: 3px solid #1f3550;
   text-align: center;
   align-items: center;
-  min-height: 120px;
+  min-height: 100px;
 }
 
 /* Red pipe between room entries */
@@ -86,9 +86,9 @@ body {
 
 .triple-split {
   display: grid;
-  grid-template-rows: 0.7fr 1fr 1.3fr;
-  gap: 20px;
-  padding: 20px 40px;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 16px 32px;
   flex: 1;
   min-height: 0;
 }
@@ -116,7 +116,7 @@ body {
 .panel {
   background: var(--card);
   border-radius: 16px;
-  padding: 18px 16px 12px;
+  padding: 14px 14px 10px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -176,7 +176,7 @@ body {
 .panel-upcoming .list {
   overflow: hidden;
   position: relative;
-  height: 220px; /* Optimized for 3-section 1920x1080 layout */
+  height: 180px; /* Optimized for equal tri-split 1920x1080 layout */
 }
 
 .panel-upcoming .list.ticker {
@@ -205,7 +205,7 @@ body {
 /* Optimized specifically for 1920x1080 displays */
 @media (min-width: 1800px) {
   .panel-upcoming .list {
-    height: 300px;
+    height: 200px;
   }
 }
 
@@ -332,12 +332,12 @@ body {
   }
   
   .logo img {
-    height: 160px;
-    max-width: 360px;
+    height: 140px;
+    max-width: 320px;
   }
 
   .title {
-    font-size: 78px;
+    font-size: 68px;
     letter-spacing: 1px;
   }
 
@@ -415,8 +415,8 @@ body {
 }
 
 .logo img {
-  height: 140px;
-  max-width: 300px;
+  height: 120px;
+  max-width: 260px;
   width: auto;
   display: block;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .3));
@@ -469,7 +469,7 @@ body {
 
 /* Base font size increases for better TV readability */
 .title {
-  font-size: 64px;
+  font-size: 58px;
   line-height: 1;
   margin: 0;
   font-weight: 800;
