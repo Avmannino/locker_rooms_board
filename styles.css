@@ -43,11 +43,11 @@ body {
   /* Using minmax to ensure equal side widths for perfect centering */
   grid-template-columns: minmax(240px, auto) 1fr minmax(240px, auto);
   gap: 32px;
-  padding: 16px 40px;
+  padding: 12px 40px;
   border-bottom: 3px solid #1f3550;
   text-align: center;
   align-items: center;
-  min-height: 140px;
+  min-height: 120px;
 }
 
 /* Red pipe between room entries */
@@ -86,9 +86,9 @@ body {
 
 .triple-split {
   display: grid;
-  grid-template-rows: 1fr 1fr 1fr;
-  gap: 24px;
-  padding: 24px 40px;
+  grid-template-rows: 0.7fr 1fr 1.3fr;
+  gap: 20px;
+  padding: 20px 40px;
   flex: 1;
   min-height: 0;
 }
@@ -116,7 +116,7 @@ body {
 .panel {
   background: var(--card);
   border-radius: 16px;
-  padding: 20px 16px 14px;
+  padding: 18px 16px 12px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -176,7 +176,7 @@ body {
 .panel-upcoming .list {
   overflow: hidden;
   position: relative;
-  height: 260px; /* Optimized for 1920x1080 display */
+  height: 220px; /* Optimized for 3-section 1920x1080 layout */
 }
 
 .panel-upcoming .list.ticker {
@@ -342,11 +342,11 @@ body {
   }
 
   #clock {
-    font-size: 52px;
+    font-size: 49px;
   }
   
   .updated {
-    font-size: 28px;
+    font-size: 25px;
   }
 
   .panel h2 {
@@ -478,13 +478,13 @@ body {
 }
 
 #clock {
-  font-size: 48px;
+  font-size: 45px;
   font-weight: 800;
 }
 
 .updated {
   color: var(--muted);
-  font-size: 30px;
+  font-size: 27px;
   margin-top: 8px;
 }
 
