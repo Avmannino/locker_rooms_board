@@ -174,24 +174,24 @@ function rowsToEvents(rows) {
   for (let i = startIndex; i < rows.length; i++) {
     const r = rows[i] || [];
     const startISO = r[0];           // Column A: Start Date/Time
-    const endISO = r[1];           // Column B: End Date/Time
+    const endISO   = r[1];           // Column B: End Date/Time
     const eventTitle = r[2] || "";   // Column C: Event Title (from EZFacility)
     const customTitle = r[3] || "";  // Column D: Custom Event Title
-    const desc = r[4] || "";     // Column E: Description (Locker Rooms)
+    const desc     = r[4] || "";     // Column E: Description (Locker Rooms)
     // Column F: Local Start Time (not used in current logic)
 
     // Use custom title if available, fallback to event title
     const displayTitle = customTitle.trim() || eventTitle.trim();
-
+    
     if (!startISO || !endISO || !displayTitle) continue;
 
     const start = new Date(startISO);
-    const end = new Date(endISO);
+    const end   = new Date(endISO);
     if (isNaN(start) || isNaN(end)) continue;
 
     // Locker & rink extraction from description (primary) or titles (fallback)
     const locker = parseLocker(desc) || parseLocker(displayTitle) || parseLocker(eventTitle) || "—";
-    const rink = parseRink(desc) || parseRink(displayTitle) || parseRink(eventTitle) || "C";
+    const rink   = parseRink(desc) || parseRink(displayTitle) || parseRink(eventTitle) || "C";
 
     events.push({
       startISO, endISO, start, end,
@@ -230,11 +230,10 @@ function splitThreeSections(events, now = new Date()) {
 
   // Get events happening today
   const todayEvents = events.filter(ev => sameDayInTZ(ev.start, now, FACILITY_TIMEZONE));
-
-  // First, separate current events from future events
+  
+  // Separate current vs future
   const currentEvents = [];
   const futureEvents = [];
-
   for (const ev of todayEvents) {
     if (ev.start <= now && now < ev.end) {
       currentEvents.push(ev);
@@ -246,29 +245,21 @@ function splitThreeSections(events, now = new Date()) {
   // Sort future events by start time
   futureEvents.sort((a, b) => a.start - b.start);
 
-  // Assign to lists based on context
+  // Assign lists
   onIceList.push(...currentEvents);
 
-  // Up Next always shows only the very next event (if any)
+  // Up Next = earliest remaining today
+  // Upcoming = all other remaining today (exclude the one shown in Up Next)
   if (futureEvents.length > 0) {
-    upNextList.push(futureEvents[0]); // keep "Up Next" as the next event
-
-    // Show all *remaining today* in "Upcoming".
-    // If there's only ONE future event left today, also show it in Upcoming.
-    if (futureEvents.length === 1) {
-      upcomingList.push(futureEvents[0]);
-    } else {
-      upcomingList.push(...futureEvents.slice(1));
-    }
+    upNextList.push(futureEvents[0]);
+    upcomingList.push(...futureEvents.slice(1)); // <-- exclude "Up Next" to avoid duplication
   }
 
-  // If no future events, both Up Next and Upcoming will be empty
-
-  // Sort each list appropriately
-  onIceList.sort((a, b) => a.end - b.end);        // ending soon first
-  upNextList.sort((a, b) => a.start - b.start);   // soonest first
-  upcomingList.sort((a, b) => a.start - b.start); // soonest first
-
+  // Sort each list
+  onIceList.sort((a, b) => a.end - b.end);
+  upNextList.sort((a, b) => a.start - b.start);
+  upcomingList.sort((a, b) => a.start - b.start);
+  
   return { onIceList, upNextList, upcomingList };
 }
 
@@ -345,7 +336,7 @@ function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoS
   const room = document.createElement("div");
   room.className = "badge room";
 
-  // Count entries robustly (each "123" possibly followed by "(note)")
+  // Count entries robustly
   const entryMatches = (ev.locker || "").match(/([A-Za-z0-9\-]+(?:\s*\([^)]+\))?)/g);
   const count = entryMatches ? entryMatches.length : 0;
   const roomLabel = count > 1 ? "Rooms" : "Room";
@@ -370,14 +361,14 @@ function renderLists(onIceList, upNextList, upcomingList) {
   const upNextUL = $("#upNextList");
   const upcomingUL = $("#upcomingList");
   const mainContainer = $(".triple-split");
-
+  
   onIceUL.innerHTML = "";
   upNextUL.innerHTML = "";
   upcomingUL.innerHTML = "";
 
   // Determine if we should use two-section mode
   const isInTwoSectionMode = onIceList.length === 0;
-
+  
   // Update layout class
   if (isInTwoSectionMode) {
     mainContainer.classList.add("two-section");
@@ -400,7 +391,7 @@ function renderLists(onIceList, upNextList, upcomingList) {
     $("#upNextEmpty").hidden = true;
     upNextList.forEach(ev => upNextUL.appendChild(createRow(ev, "up-next", isInTwoSectionMode)));
   }
-
+  
   // Upcoming section
   if (upcomingList.length === 0) {
     $("#upcomingEmpty").hidden = false;
@@ -408,7 +399,7 @@ function renderLists(onIceList, upNextList, upcomingList) {
   } else {
     $("#upcomingEmpty").hidden = true;
     upcomingList.forEach(ev => upcomingUL.appendChild(createRow(ev, "upcoming", isInTwoSectionMode)));
-
+    
     // Start ticker after a brief delay to ensure DOM is ready
     setTimeout(() => {
       startTicker();
@@ -469,7 +460,6 @@ function startTicker() {
     }, 400);
   }, 8000);
 }
-
 
 function stopTicker() {
   if (tickerInterval) {
