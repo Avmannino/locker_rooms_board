@@ -198,24 +198,34 @@ body {
   animation: none; /* Will be controlled by JavaScript */
 }
 
-.panel-upcoming .list li {
+/* Default (no ticker): show items normally */
+.panel-upcoming .list:not(.ticker) li {
+  position: static;
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* Ticker mode only when class is present */
+.panel-upcoming .list.ticker li {
   position: absolute;
   width: 100%;
   opacity: 0;
   transform: translateY(100%);
   transition: all 0.8s ease-in-out;
-  border-bottom: none !important; /* No separators for ticker items */
+  border-bottom: none !important;
 }
 
-.panel-upcoming .list li.active {
+.panel-upcoming .list.ticker li.active {
   opacity: 1;
   transform: translateY(0);
 }
 
-.panel-upcoming .list li.exit {
+.panel-upcoming .list.ticker li.exit {
   opacity: 0;
   transform: translateY(-100%);
 }
+
 
 /* Optimized specifically for 1920x1080 displays */
 @media (min-width: 1800px) {
