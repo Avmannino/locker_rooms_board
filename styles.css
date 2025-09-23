@@ -96,6 +96,8 @@ body {
 /* Two-section layout when no teams on ice */
 .triple-split.two-section {
   grid-template-rows: 1fr 1fr;
+  gap: 24px;
+  padding: 24px 40px;
   grid-template-areas: 
     "up-next"
     "upcoming";
@@ -111,6 +113,19 @@ body {
 
 .triple-split.two-section .panel-upcoming {
   grid-area: upcoming;
+}
+
+.triple-split.two-section .panel {
+  padding: 20px 18px 16px;
+}
+
+.triple-split.two-section .panel-upcoming .list {
+  height: 260px;
+}
+
+.triple-split.two-section .list li {
+  padding: 18px 0;
+  gap: 14px;
 }
 
 .panel {
@@ -206,6 +221,10 @@ body {
 @media (min-width: 1800px) {
   .panel-upcoming .list {
     height: 200px;
+  }
+  
+  .triple-split.two-section .panel-upcoming .list {
+    height: 300px;
   }
 }
 
