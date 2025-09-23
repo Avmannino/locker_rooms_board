@@ -83,39 +83,46 @@ body {
   margin-top: 6px;
 }
 
-.split {
+.triple-split {
   display: grid;
-  grid-template-rows: 0.3fr 0.8fr;
-  gap: 24px;
-  padding: 24px 32px;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 20px;
+  padding: 20px 32px;
   flex: 1;
   min-height: 0;
+}
+
+/* Two-section layout when no teams on ice */
+.triple-split.two-section {
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas: 
+    "up-next"
+    "upcoming";
+}
+
+.triple-split.two-section .panel-on-ice {
+  display: none;
+}
+
+.triple-split.two-section .panel-up-next {
+  grid-area: up-next;
+}
+
+.triple-split.two-section .panel-upcoming {
+  grid-area: upcoming;
 }
 
 .panel {
   background: var(--card);
   border-radius: 16px;
-  padding: 18px 18px 12px;
+  padding: 20px 16px 14px;
   display: flex;
   flex-direction: column;
   min-height: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
 }
 
-.panel-next .list li{
-  padding-top: 14px;     /* was 14px */
-  padding-bottom: 26px;  /* increase to push content up from the bottom border */
-  border-bottom: 2px dashed #23415d; /* was 1px */
-}
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 8px 14px 8px;
-  border-bottom: 1px solid #1e3953;
-  margin-bottom: 6px;
-}
 
 .panel h2 {
   margin: 0;
@@ -138,13 +145,19 @@ body {
   font-size: 34px;
 }
 
-.chip-now {
+.chip-on-ice {
   background: rgba(61, 220, 151, .18);
   border: 2px solid var(--accent-now);
   color: var(--accent-now);
 }
 
-.chip-next {
+.chip-up-next {
+  background: rgba(255, 187, 0, 0.18);
+  border: 2px solid #ffbb00;
+  color: #ffbb00;
+}
+
+.chip-upcoming {
   background: rgba(189, 38, 38, 0.58);
   border: 2px solid var(--accent-next);
   color: var(--accent-next);
@@ -158,18 +171,71 @@ body {
   /* scroll if super long */
 }
 
+/* Ticker animation for upcoming section */
+.panel-upcoming .list {
+  overflow: hidden;
+  position: relative;
+  height: 220px; /* Fixed height to show one item at a time - increased for equal sections */
+}
+
+.panel-upcoming .list.ticker {
+  animation: none; /* Will be controlled by JavaScript */
+}
+
+.panel-upcoming .list li {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.8s ease-in-out;
+  border-bottom: none !important; /* No separators for ticker items */
+}
+
+.panel-upcoming .list li.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.panel-upcoming .list li.exit {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+/* Increase height for larger screens */
+@media (min-width: 1600px) {
+  .panel-upcoming .list {
+    height: 280px;
+  }
+}
+
 .list li {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+/* Remove separator lines for upcoming events */
+.panel-on-ice .list li,
+.panel-up-next .list li {
+  border-bottom: 1px solid #23415d;
+}
+
+.panel-on-ice .list li:last-child,
+.panel-up-next .list li:last-child {
+  border-bottom: none;
+}
+
+.status-chip {
+  align-self: flex-start;
+  margin-bottom: 8px;
+}
+
+.content-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
-
-  .item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-  }
 }
 
 .team {
@@ -178,7 +244,9 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
 }
+
 
 .meta {
   color: var(--muted);
@@ -255,31 +323,104 @@ body {
   margin-right: 18px;
 }
 
-/* Big TV scaling for 1080p */
+/* Optimized for 1080p TV Display */
 @media (min-width: 1600px) {
+  .app-header {
+    padding: 20px 40px;
+    gap: 30px;
+  }
+  
+  .logo img {
+    height: 180px;
+    max-width: 400px;
+  }
+
   .title {
-    font-size: 84px;
+    font-size: 96px;
+    letter-spacing: 1px;
   }
 
   #clock {
-    font-size: 48px;
+    font-size: 52px;
+  }
+  
+  .updated {
+    font-size: 28px;
   }
 
   .panel h2 {
-    font-size: 48px;
+    font-size: 52px;
+    letter-spacing: 0.5px;
+  }
+  
+  .chip {
+    font-size: 36px;
+    padding: 10px 16px;
+  }
+  
+  .muted {
+    font-size: 26px;
   }
 
+  .team {
+    font-size: 38px;
+  }
+  
+  .meta {
+    font-size: 22px;
+  }
+  
+  .badge {
+    font-size: 42px;
+    padding: 10px 16px;
+  }
+  
+  .empty {
+    font-size: 34px;
+    padding: 20px;
+  }
+  
+  .footer {
+    font-size: 30px;
+    padding: 12px 32px 24px;
+  }
+  
+  .triple-split {
+    gap: 24px;
+    padding: 24px 40px;
+  }
+  
+  .panel {
+    padding: 24px 20px 18px;
+  }
+  
+  .chip {
+    font-size: 32px;
+    padding: 8px 16px;
+  }
+  
   .list li {
-    font-size: 36px;
+    padding: 18px 0;
+    gap: 14px;
+  }
+  
+  .status-chip {
+    margin-bottom: 10px;
+  }
+  
+  .content-row {
+    gap: 20px;
   }
 }
 
 .logo img {
-  height: 72px;
-  /* tweak if you want it larger */
+  height: 140px;
+  max-width: 300px;
   width: auto;
   display: block;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .3));
+  object-fit: contain;
+  object-position: center;
 }
 
 .brand {
@@ -319,22 +460,83 @@ body {
   margin-top: 6px;
 }
 
-/* Big TV scaling for 1080p+ */
-@media (min-width: 1600px) {
-  .logo img {
-    height: 250px;
-  }
 
-  .title {
-    font-size: 104px;
-  }
-
-  #clock {
-    font-size: 48px;
-  }
+/* TV Overscan safety and base optimizations */
+#app {
+  padding: 0 30px;
 }
 
-/* Overscan safety */
-#app {
-  padding: 0 20px;
+/* Base font size increases for better TV readability */
+.title {
+  font-size: 56px;
+  line-height: 1;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-align: center;
+}
+
+#clock {
+  font-size: 44px;
+  font-weight: 800;
+}
+
+.updated {
+  color: var(--muted);
+  font-size: 28px;
+  margin-top: 6px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 46px;
+  letter-spacing: .4px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  font-size: 36px;
+}
+
+.team {
+  font-weight: 800;
+  font-size: 37px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  font-size: 42px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  white-space: nowrap;
+  border: 2px solid #2d4f74;
+  background: #0f2135;
+}
+
+.empty {
+  margin: 24px;
+  padding: 20px;
+  border: 2px dashed #365c87;
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 34px;
+  text-align: center;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 28px 22px;
+  color: var(--muted);
+  border-top: 2px solid #1f3550;
+  font-size: 30px;
 }

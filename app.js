@@ -109,8 +109,11 @@ function parseRink(text) {
 
 function cleanTeamName(title) {
   if (!title) return "";
-  // Remove trailing " - Locker 3" patterns to keep team name clean
-  return title.replace(/\s*[-–—]\s*(locker(?:\s*room)?|room|rm|lr|lkr)\b.*$/i, "").trim();
+  // Remove trailing " - Locker 3" patterns and " - Rink Program" to keep team name clean
+  return title
+    .replace(/\s*[-–—]\s*(locker(?:\s*room)?|room|rm|lr|lkr)\b.*$/i, "")
+    .replace(/\s*[-–—]\s*rink\s+program\s*$/i, "")
+    .trim();
 }
 
 /************************************
@@ -210,25 +213,39 @@ function sameDayInTZ(a, b, tz = FACILITY_TIMEZONE) {
 }
 
 /************************************
- * FILTER into Now / Next (Next = rest of TODAY)
+ * FILTER into On Ice / Up Next / Upcoming
  ************************************/
-function splitNowNext(events, now = new Date()) {
-  const nowList = [];
-  const nextList = [];
+function splitThreeSections(events, now = new Date()) {
+  const onIceList = [];
+  const upNextList = [];
+  const upcomingList = [];
 
-  for (const ev of events) {
+  // Get events happening today
+  const todayEvents = events.filter(ev => sameDayInTZ(ev.start, now, FACILITY_TIMEZONE));
+  
+  for (const ev of todayEvents) {
     if (ev.start <= now && now < ev.end) {
-      nowList.push(ev);
-    } else if (ev.start > now && sameDayInTZ(ev.start, now, FACILITY_TIMEZONE)) {
-      // Anything later TODAY goes to "Next"
-      nextList.push(ev);
+      // Currently happening - "On Ice"
+      onIceList.push(ev);
+    } else if (ev.start > now) {
+      // Future events today
+      const minutesUntil = Math.round((ev.start - now) / 60000);
+      if (minutesUntil <= 60) {
+        // Within next hour - "Up Next"
+        upNextList.push(ev);
+      } else {
+        // Later today - "Upcoming"
+        upcomingList.push(ev);
+      }
     }
   }
 
-  // Nice ordering
-  nowList.sort((a, b) => a.end - b.end);      // ending soon first
-  nextList.sort((a, b) => a.start - b.start); // soonest first
-  return { nowList, nextList };
+  // Sort each list appropriately
+  onIceList.sort((a, b) => a.end - b.end);        // ending soon first
+  upNextList.sort((a, b) => a.start - b.start);   // soonest first
+  upcomingList.sort((a, b) => a.start - b.start); // soonest first
+  
+  return { onIceList, upNextList, upcomingList };
 }
 
 /************************************
@@ -260,17 +277,45 @@ function renderLockerBadgeContent(container, lockerStr) {
 /************************************
  * RENDER
  ************************************/
-function createRow(ev, context /* "now" | "next" */) {
+function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoSectionMode = false) {
   const li = document.createElement("li");
 
-  const left = document.createElement("div");
-  left.className = "item";
+  // Status chip at top-left
+  const statusChip = document.createElement("div");
+  statusChip.className = "status-chip";
+  if (context === "on-ice") {
+    statusChip.className += " chip chip-on-ice";
+    statusChip.textContent = "In Progress";
+  } else if (context === "up-next") {
+    statusChip.className += " chip chip-up-next";
+    statusChip.textContent = isInTwoSectionMode ? "Up Next" : "Next";
+  } else if (context === "upcoming") {
+    statusChip.className += " chip chip-upcoming";
+    statusChip.textContent = "Upcoming";
+  }
+
+  // Content row with time, team, and room aligned horizontally
+  const contentRow = document.createElement("div");
+  contentRow.className = "content-row";
+
+  // Time badge
+  const time = document.createElement("div");
+  time.className = "badge time";
+  const range = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
+  time.textContent = range || "";
+
+  // Warning if about to start (for "up-next" column)
+  if (context === "up-next") {
+    const minutesTo = Math.round((ev.start - new Date()) / 60000);
+    if (minutesTo <= 10) {
+      time.classList.add("warn");
+    }
+  }
 
   // Team name
   const team = document.createElement("div");
   team.className = "team";
   team.textContent = ev.team || ev.titleRaw;
-  left.appendChild(team);
 
   // Room badge
   const room = document.createElement("div");
@@ -285,46 +330,142 @@ function createRow(ev, context /* "now" | "next" */) {
   room.append(`${roomLabel} `);
   renderLockerBadgeContent(room, ev.locker);
 
-  // Time badge
-  const time = document.createElement("div");
-  time.className = "badge time";
-  const range = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
-  time.textContent = range || "";
+  // Assemble content row: time, team, room
+  contentRow.appendChild(time);
+  contentRow.appendChild(team);
+  contentRow.appendChild(room);
 
-  // Warning if about to start (for "next" column)
-  if (context === "next") {
-    const minutesTo = Math.round((ev.start - new Date()) / 60000);
-    if (minutesTo <= 10) {
-      time.classList.add("warn");
-    }
-  }
-
-  // Put time first, then team, then room
-  li.appendChild(time);
-  li.appendChild(left);
-  li.appendChild(room);
+  // Assemble the full row: chip on top, content below
+  li.appendChild(statusChip);
+  li.appendChild(contentRow);
   return li;
 }
 
-function renderLists(nowList, nextList) {
-  const nowUL = $("#nowList");
-  const nextUL = $("#nextList");
-  nowUL.innerHTML = "";
-  nextUL.innerHTML = "";
+function renderLists(onIceList, upNextList, upcomingList) {
+  const onIceUL = $("#onIceList");
+  const upNextUL = $("#upNextList");
+  const upcomingUL = $("#upcomingList");
+  const mainContainer = $(".triple-split");
+  
+  onIceUL.innerHTML = "";
+  upNextUL.innerHTML = "";
+  upcomingUL.innerHTML = "";
 
-  if (nowList.length === 0) {
-    $("#nowEmpty").hidden = false;
+  // Determine if we should use two-section mode
+  const isInTwoSectionMode = onIceList.length === 0;
+  
+  // Update layout class
+  if (isInTwoSectionMode) {
+    mainContainer.classList.add("two-section");
   } else {
-    $("#nowEmpty").hidden = true;
-    nowList.forEach(ev => nowUL.appendChild(createRow(ev, "now")));
+    mainContainer.classList.remove("two-section");
   }
 
-  if (nextList.length === 0) {
-    $("#nextEmpty").hidden = false;
+  // On Ice section
+  if (onIceList.length === 0) {
+    $("#onIceEmpty").hidden = false;
   } else {
-    $("#nextEmpty").hidden = true;
-    nextList.forEach(ev => nextUL.appendChild(createRow(ev, "next")));
+    $("#onIceEmpty").hidden = true;
+    onIceList.forEach(ev => onIceUL.appendChild(createRow(ev, "on-ice", isInTwoSectionMode)));
   }
+
+  // Up Next section
+  if (upNextList.length === 0) {
+    $("#upNextEmpty").hidden = false;
+  } else {
+    $("#upNextEmpty").hidden = true;
+    upNextList.forEach(ev => upNextUL.appendChild(createRow(ev, "up-next", isInTwoSectionMode)));
+  }
+  
+  // Upcoming section
+  if (upcomingList.length === 0) {
+    $("#upcomingEmpty").hidden = false;
+    stopTicker(); // Stop ticker if no items
+  } else {
+    $("#upcomingEmpty").hidden = true;
+    upcomingList.forEach(ev => upcomingUL.appendChild(createRow(ev, "upcoming", isInTwoSectionMode)));
+    
+    // Start ticker after a brief delay to ensure DOM is ready
+    setTimeout(() => {
+      startTicker();
+    }, 100);
+  }
+}
+
+/************************************
+ * TICKER FUNCTIONALITY FOR UPCOMING
+ ************************************/
+let tickerInterval = null;
+let currentTickerIndex = 0;
+let tickerItems = [];
+
+function startTicker() {
+  const upcomingList = $("#upcomingList");
+  tickerItems = Array.from(upcomingList.children);
+  
+  if (tickerItems.length <= 1) {
+    // No need for ticker if only 0 or 1 items
+    if (tickerInterval) {
+      clearInterval(tickerInterval);
+      tickerInterval = null;
+    }
+    return;
+  }
+  
+  // Add ticker class to enable ticker styling
+  upcomingList.classList.add('ticker');
+  
+  // Initially hide all items
+  tickerItems.forEach(item => {
+    item.classList.remove('active', 'exit');
+  });
+  
+  // Show first item
+  if (tickerItems[0]) {
+    tickerItems[0].classList.add('active');
+    currentTickerIndex = 0;
+  }
+  
+  // Clear any existing interval
+  if (tickerInterval) {
+    clearInterval(tickerInterval);
+  }
+  
+  // Start the ticker (show each item for 4 seconds)
+  tickerInterval = setInterval(() => {
+    if (tickerItems.length <= 1) return;
+    
+    const currentItem = tickerItems[currentTickerIndex];
+    const nextIndex = (currentTickerIndex + 1) % tickerItems.length;
+    const nextItem = tickerItems[nextIndex];
+    
+    // Exit current item
+    currentItem.classList.remove('active');
+    currentItem.classList.add('exit');
+    
+    // After a brief delay, show next item and reset current
+    setTimeout(() => {
+      currentItem.classList.remove('exit');
+      nextItem.classList.add('active');
+      currentTickerIndex = nextIndex;
+    }, 400); // Half of the transition time
+    
+  }, 8000); // 8 seconds per item
+}
+
+function stopTicker() {
+  if (tickerInterval) {
+    clearInterval(tickerInterval);
+    tickerInterval = null;
+  }
+  
+  const upcomingList = $("#upcomingList");
+  upcomingList.classList.remove('ticker');
+  
+  // Reset all items to normal state
+  tickerItems.forEach(item => {
+    item.classList.remove('active', 'exit');
+  });
 }
 
 /************************************
@@ -337,9 +478,9 @@ async function loadAndRender() {
       : await fetchGVizJSON(SHEET_JSON_URL);
 
     const events = rowsToEvents(rows);
-    const { nowList, nextList } = splitNowNext(events, new Date());
+    const { onIceList, upNextList, upcomingList } = splitThreeSections(events, new Date());
 
-    renderLists(nowList, nextList);
+    renderLists(onIceList, upNextList, upcomingList);
 
     // Update timestamp
     $("#updated").textContent = `Updated: ${fmtUpdated(new Date(), FACILITY_TIMEZONE)}`;

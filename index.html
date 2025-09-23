@@ -19,7 +19,7 @@
 
       <!-- CENTER: Title/Sub -->
       <div class="brand">
-        <h1 class="title">LOCKER ROOMS</h1>
+        <h1 class="title">SCHEDULE & LOCKER ROOMS</h1>
         <!-- <div class="subtitle">Now / Next</div> -->
       </div>
 
@@ -30,23 +30,20 @@
       </div>
     </header>
 
-    <main class="split">
-      <section class="panel panel-now">
-        <div class="panel-header">
-          <h2>Now</h2>
-          <span class="chip chip-now">In Progress</span>
-        </div>
-        <ul id="nowList" class="list" role="list"></ul>
-        <div id="nowEmpty" class="empty" hidden>No Teams Right Now</div>
+    <main class="triple-split">
+      <section class="panel panel-on-ice">
+        <ul id="onIceList" class="list" role="list"></ul>
+        <div id="onIceEmpty" class="empty" hidden>No Teams On Ice</div>
       </section>
 
-      <section class="panel panel-next">
-        <div class="panel-header">
-          <h2>Upcoming <span class="muted">(today)</span></h2>
-          <span class="chip chip-next">Upcoming</span>
-        </div>
-        <ul id="nextList" class="list" role="list"></ul>
-        <div id="nextEmpty" class="empty" hidden>No more teams scheduled today.</div>
+      <section class="panel panel-up-next">
+        <ul id="upNextList" class="list" role="list"></ul>
+        <div id="upNextEmpty" class="empty" hidden>No Teams Up Next</div>
+      </section>
+
+      <section class="panel panel-upcoming">
+        <ul id="upcomingList" class="list" role="list"></ul>
+        <div id="upcomingEmpty" class="empty" hidden>No more teams scheduled today.</div>
       </section>
     </main>
 
