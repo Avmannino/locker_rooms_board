@@ -41,12 +41,13 @@ body {
   display: grid;
   /* 3 columns: left (logo auto), center (title 1fr), right (clock auto) */
   /* Using minmax to ensure equal side widths for perfect centering */
-  grid-template-columns: minmax(200px, auto) 1fr minmax(200px, auto);
-  gap: 26px;
-  padding: 0px 32px;
-  border-bottom: 2px solid #1f3550;
+  grid-template-columns: minmax(240px, auto) 1fr minmax(240px, auto);
+  gap: 32px;
+  padding: 16px 40px;
+  border-bottom: 3px solid #1f3550;
   text-align: center;
   align-items: center;
+  min-height: 140px;
 }
 
 /* Red pipe between room entries */
@@ -86,8 +87,8 @@ body {
 .triple-split {
   display: grid;
   grid-template-rows: 1fr 1fr 1fr;
-  gap: 20px;
-  padding: 20px 32px;
+  gap: 24px;
+  padding: 24px 40px;
   flex: 1;
   min-height: 0;
 }
@@ -175,7 +176,7 @@ body {
 .panel-upcoming .list {
   overflow: hidden;
   position: relative;
-  height: 220px; /* Fixed height to show one item at a time - increased for equal sections */
+  height: 260px; /* Optimized for 1920x1080 display */
 }
 
 .panel-upcoming .list.ticker {
@@ -201,10 +202,10 @@ body {
   transform: translateY(-100%);
 }
 
-/* Increase height for larger screens */
-@media (min-width: 1600px) {
+/* Optimized specifically for 1920x1080 displays */
+@media (min-width: 1800px) {
   .panel-upcoming .list {
-    height: 280px;
+    height: 300px;
   }
 }
 
@@ -323,20 +324,20 @@ body {
   margin-right: 18px;
 }
 
-/* Optimized for 1080p TV Display */
-@media (min-width: 1600px) {
+/* Optimized specifically for 1920x1080 TV Display */
+@media (min-width: 1800px) {
   .app-header {
     padding: 20px 40px;
     gap: 30px;
   }
   
   .logo img {
-    height: 180px;
-    max-width: 400px;
+    height: 160px;
+    max-width: 360px;
   }
 
   .title {
-    font-size: 96px;
+    font-size: 78px;
     letter-spacing: 1px;
   }
 
@@ -468,23 +469,23 @@ body {
 
 /* Base font size increases for better TV readability */
 .title {
-  font-size: 56px;
+  font-size: 64px;
   line-height: 1;
   margin: 0;
   font-weight: 800;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
   text-align: center;
 }
 
 #clock {
-  font-size: 44px;
+  font-size: 48px;
   font-weight: 800;
 }
 
 .updated {
   color: var(--muted);
-  font-size: 28px;
-  margin-top: 6px;
+  font-size: 30px;
+  margin-top: 8px;
 }
 
 .panel h2 {
@@ -495,25 +496,26 @@ body {
 
 .chip {
   display: inline-block;
-  padding: 10px 14px;
+  padding: 12px 18px;
   border-radius: 999px;
   font-weight: 800;
-  letter-spacing: .3px;
-  font-size: 36px;
+  letter-spacing: .4px;
+  font-size: 40px;
 }
 
 .team {
   font-weight: 800;
-  font-size: 37px;
+  font-size: 42px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .badge {
-  font-size: 42px;
-  padding: 10px 16px;
-  border-radius: 10px;
+  font-size: 44px;
+  padding: 12px 18px;
+  border-radius: 12px;
   font-weight: 800;
   letter-spacing: .4px;
   white-space: nowrap;

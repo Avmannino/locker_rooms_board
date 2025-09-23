@@ -109,10 +109,11 @@ function parseRink(text) {
 
 function cleanTeamName(title) {
   if (!title) return "";
-  // Remove trailing " - Locker 3" patterns and " - Rink Program" to keep team name clean
+  // Remove trailing " - Locker 3" patterns, " - Rink Program", and "(Wings Ice Rink)" to keep team name clean
   return title
     .replace(/\s*[-–—]\s*(locker(?:\s*room)?|room|rm|lr|lkr)\b.*$/i, "")
     .replace(/\s*[-–—]\s*rink\s+program\s*$/i, "")
+    .replace(/\s*\(\s*wings\s+ice\s+rink\s*\)\s*/gi, "")
     .trim();
 }
 
@@ -172,28 +173,35 @@ function rowsToEvents(rows) {
   const events = [];
   for (let i = startIndex; i < rows.length; i++) {
     const r = rows[i] || [];
-    const startISO = r[0];           // "2025-10-26T16:40:00Z"
-    const endISO   = r[1];
-    const title    = r[2] || "";
-    const desc     = r[3] || "";
+    const startISO = r[0];           // Column A: Start Date/Time
+    const endISO   = r[1];           // Column B: End Date/Time
+    const eventTitle = r[2] || "";   // Column C: Event Title (from EZFacility)
+    const customTitle = r[3] || "";  // Column D: Custom Event Title
+    const desc     = r[4] || "";     // Column E: Description (Locker Rooms)
+    // Column F: Local Start Time (not used in current logic)
 
-    if (!startISO || !endISO || !title) continue;
+    // Use custom title if available, fallback to event title
+    const displayTitle = customTitle.trim() || eventTitle.trim();
+    
+    if (!startISO || !endISO || !displayTitle) continue;
 
     const start = new Date(startISO);
     const end   = new Date(endISO);
     if (isNaN(start) || isNaN(end)) continue;
 
-    // Locker & rink extraction from title or description
-    const locker = parseLocker(title) || parseLocker(desc) || "—";
-    const rink   = parseRink(title) || parseRink(desc) || "C";
+    // Locker & rink extraction from description (primary) or titles (fallback)
+    const locker = parseLocker(desc) || parseLocker(displayTitle) || parseLocker(eventTitle) || "—";
+    const rink   = parseRink(desc) || parseRink(displayTitle) || parseRink(eventTitle) || "C";
 
     events.push({
       startISO, endISO, start, end,
-      titleRaw: title,
-      team: cleanTeamName(title),
+      titleRaw: displayTitle,
+      team: cleanTeamName(displayTitle),
       description: desc,
       locker,
-      rink
+      rink,
+      originalTitle: eventTitle, // Keep original for debugging if needed
+      customTitle: customTitle
     });
   }
 
@@ -223,22 +231,30 @@ function splitThreeSections(events, now = new Date()) {
   // Get events happening today
   const todayEvents = events.filter(ev => sameDayInTZ(ev.start, now, FACILITY_TIMEZONE));
   
+  // First, separate current events from future events
+  const currentEvents = [];
+  const futureEvents = [];
+  
   for (const ev of todayEvents) {
     if (ev.start <= now && now < ev.end) {
-      // Currently happening - "On Ice"
-      onIceList.push(ev);
+      currentEvents.push(ev);
     } else if (ev.start > now) {
-      // Future events today
-      const minutesUntil = Math.round((ev.start - now) / 60000);
-      if (minutesUntil <= 60) {
-        // Within next hour - "Up Next"
-        upNextList.push(ev);
-      } else {
-        // Later today - "Upcoming"
-        upcomingList.push(ev);
-      }
+      futureEvents.push(ev);
     }
   }
+  
+  // Sort future events by start time
+  futureEvents.sort((a, b) => a.start - b.start);
+  
+  // Assign to lists based on context
+  onIceList.push(...currentEvents);
+  
+  // Up Next always shows only the very next event (if any)
+  if (futureEvents.length > 0) {
+    upNextList.push(futureEvents[0]); // Just the first (earliest) future event
+    upcomingList.push(...futureEvents.slice(1)); // All remaining future events
+  }
+  // If no future events, both Up Next and Upcoming will be empty
 
   // Sort each list appropriately
   onIceList.sort((a, b) => a.end - b.end);        // ending soon first
