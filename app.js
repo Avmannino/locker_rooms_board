@@ -71,10 +71,11 @@ function parseLocker(text) {
     let segment = (listMatch[1] || "");
 
     // Normalize common separators to a single pipe so we can split safely
-    // (&, +, " and ", commas, slashes)
+    // (&, +, " and ", commas, slashes) - but protect && for game separation
     segment = segment
       .replace(/\s+(and)\s+/gi, "|")
-      .replace(/[&+]/g, "|")
+      .replace(/(?<!&)&(?!&)/g, "|") // Replace single & but not &&
+      .replace(/[+]/g, "|")
       .replace(/[,/]/g, "|")
       .replace(/\s*\|\s*/g, "|"); // collapse spaces around pipes
 
@@ -192,6 +193,9 @@ function rowsToEvents(rows) {
     // Locker & rink extraction from description (primary) or titles (fallback)
     const locker = parseLocker(desc) || parseLocker(displayTitle) || parseLocker(eventTitle) || "—";
     const rink   = parseRink(desc) || parseRink(displayTitle) || parseRink(eventTitle) || "C";
+    
+    // Keep raw locker text for && parsing
+    const rawLocker = desc || displayTitle || eventTitle || "—";
 
     events.push({
       startISO, endISO, start, end,
@@ -199,6 +203,7 @@ function rowsToEvents(rows) {
       team: cleanTeamName(displayTitle),
       description: desc,
       locker,
+      rawLocker, // Preserve original text for && splitting
       rink,
       originalTitle: eventTitle, // Keep original for debugging if needed
       customTitle: customTitle
@@ -279,11 +284,11 @@ function renderLockerBadgeContent(container, lockerStr) {
     // Keep the text exactly as-is (numbers + optional parentheses)
     container.append(part);
 
-    // Insert red pipe between entries (not after the last one)
+    // Insert red pipe between entries (not after the last one) with spaces
     if (idx < parts.length - 1) {
       const sep = document.createElement("span");
       sep.className = "room-sep";
-      sep.textContent = "|";
+      sep.textContent = " | ";
       container.appendChild(sep);
     }
   });
@@ -294,20 +299,6 @@ function renderLockerBadgeContent(container, lockerStr) {
  ************************************/
 function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoSectionMode = false) {
   const li = document.createElement("li");
-
-  // Status chip at top-left
-  const statusChip = document.createElement("div");
-  statusChip.className = "status-chip";
-  if (context === "on-ice") {
-    statusChip.className += " chip chip-on-ice";
-    statusChip.textContent = "In Progress";
-  } else if (context === "up-next") {
-    statusChip.className += " chip chip-up-next";
-    statusChip.textContent = isInTwoSectionMode ? "Up Next" : "Next";
-  } else if (context === "upcoming") {
-    statusChip.className += " chip chip-upcoming";
-    statusChip.textContent = "Upcoming";
-  }
 
   // Content row with time, team, and room aligned horizontally
   const contentRow = document.createElement("div");
@@ -327,31 +318,61 @@ function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoS
     }
   }
 
-  // Team name
-  const team = document.createElement("div");
-  team.className = "team";
-  team.textContent = ev.team || ev.titleRaw;
+  // Handle multi-game events with && separator
+  const teamTitle = ev.team || ev.titleRaw;
+  const teamContainer = document.createElement("div");
+  teamContainer.className = "team-container";
+  
+  // Check for multi-game separator
+  const games = teamTitle.split('&&').map(game => game.trim());
+  const lockerParts = (ev.rawLocker || ev.locker || "").split('&&').map(locker => locker.trim());
+  
+  if (games.length > 1) {
+    // Multi-game display
+    contentRow.classList.add("multi-game");
+    games.forEach((game, index) => {
+      const gameRow = document.createElement("div");
+      gameRow.className = "game-row";
+      
+      const teamDiv = document.createElement("div");
+      teamDiv.className = "team";
+      teamDiv.textContent = game;
+      gameRow.appendChild(teamDiv);
+      
+      // Use corresponding locker or fallback to combined
+      const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
+      const gameLocker = parseLocker(rawGameLocker) || rawGameLocker || "—";
+      const roomDiv = document.createElement("div");
+      roomDiv.className = "room-numbers";
+      
+      // Just render the numbers/letters without "Room" prefix
+      renderLockerBadgeContent(roomDiv, gameLocker);
+      gameRow.appendChild(roomDiv);
+      
+      teamContainer.appendChild(gameRow);
+    });
+    
+    // For multi-games, we structure differently
+    contentRow.appendChild(time);
+    contentRow.appendChild(teamContainer);
+  } else {
+    // Single game display (existing logic)
+    const team = document.createElement("div");
+    team.className = "team";
+    team.textContent = teamTitle;
 
-  // Room badge
-  const room = document.createElement("div");
-  room.className = "badge room";
+    const room = document.createElement("div");
+    room.className = "room-numbers";
 
-  // Count entries robustly
-  const entryMatches = (ev.locker || "").match(/([A-Za-z0-9\-]+(?:\s*\([^)]+\))?)/g);
-  const count = entryMatches ? entryMatches.length : 0;
-  const roomLabel = count > 1 ? "Rooms" : "Room";
+    // Just render the numbers/letters without "Room" prefix
+    renderLockerBadgeContent(room, ev.locker);
 
-  // Render label + red pipe-separated entries
-  room.append(`${roomLabel} `);
-  renderLockerBadgeContent(room, ev.locker);
+    contentRow.appendChild(time);
+    contentRow.appendChild(team);
+    contentRow.appendChild(room);
+  }
 
-  // Assemble content row: time, team, room
-  contentRow.appendChild(time);
-  contentRow.appendChild(team);
-  contentRow.appendChild(room);
-
-  // Assemble the full row: chip on top, content below
-  li.appendChild(statusChip);
+  // Assemble the row
   li.appendChild(contentRow);
   return li;
 }
@@ -372,8 +393,14 @@ function renderLists(onIceList, upNextList, upcomingList) {
   // Update layout class
   if (isInTwoSectionMode) {
     mainContainer.classList.add("two-section");
+    // Update chip text for two-section mode
+    const upNextChip = $(".panel-up-next .chip-up-next");
+    if (upNextChip) upNextChip.textContent = "Up Next";
   } else {
     mainContainer.classList.remove("two-section");
+    // Update chip text for three-section mode
+    const upNextChip = $(".panel-up-next .chip-up-next");
+    if (upNextChip) upNextChip.textContent = "Next";
   }
 
   // On Ice section

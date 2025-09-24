@@ -32,16 +32,17 @@ body {
 }
 
 #app {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 1080px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .app-header {
   display: grid;
-  /* 3 columns: left (logo auto), center (title 1fr), right (clock auto) */
-  /* Using minmax to ensure equal side widths for perfect centering */
-  grid-template-columns: minmax(220px, auto) 1fr minmax(220px, auto);
+  /* 3 columns: left and right columns EXACTLY equal, center gets remaining space */
+  grid-template-columns: 300px 1fr 300px;
   gap: 28px;
   padding: 10px 32px;
   border-bottom: 3px solid #1f3550;
@@ -51,12 +52,10 @@ body {
 }
 
 /* Red pipe between room entries */
-.badge.room .room-sep {
+.room-sep {
   color: var(--accent-next);
   /* your red */
   font-weight: 900;
-  padding: 0 8px;
-  /* space around the pipe */
   line-height: 1;
 }
 
@@ -87,8 +86,8 @@ body {
 .triple-split {
   display: grid;
   grid-template-rows: 1fr 1fr 1fr;
-  gap: 16px;
-  padding: 16px 32px;
+  gap: 14px;
+  padding: 14px 28px 18px;
   flex: 1;
   min-height: 0;
 }
@@ -96,8 +95,8 @@ body {
 /* Two-section layout when no teams on ice */
 .triple-split.two-section {
   grid-template-rows: 1fr 1fr;
-  gap: 24px;
-  padding: 24px 40px;
+  gap: 26px;
+  padding: 26px 40px 32px;
   grid-template-areas: 
     "up-next"
     "upcoming";
@@ -131,11 +130,35 @@ body {
 .panel {
   background: var(--card);
   border-radius: 16px;
-  padding: 14px 14px 10px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+}
+
+.panel-header-new {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  border-bottom: 1px solid #23415d;
+}
+
+.locker-rooms-chip {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 2px solid #6366f1;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
+
+.list {
+  padding: 8px 14px 12px;
 }
 
 
@@ -241,8 +264,8 @@ body {
 .list li {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 0;
+  gap: 8px;
+  padding: 10px 0;
 }
 
 /* Remove separator lines for upcoming events */
@@ -256,21 +279,97 @@ body {
   border-bottom: none;
 }
 
-.status-chip {
-  align-self: flex-start;
-  margin-bottom: 8px;
-}
 
 .content-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
+  margin: 0 14px; /* Match panel header padding for consistent spacing */
+}
+
+/* Multi-game content rows don't need margin since game-rows handle their own spacing */
+.content-row.multi-game {
+  margin: 0;
+  grid-template-columns: auto 1fr; /* Only time and team-container for multi-game */
+  padding-left: 14px; /* Add left spacing for time badge */
+}
+
+/* Center room numbers under "Locker Rooms" header */
+.content-row .room-numbers {
+  justify-self: center;
+}
+
+/* Multi-game layout support */
+.team-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Multi-game containers already inherit margin from content-row */
+}
+
+.game-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 0 14px; /* Match panel header padding for consistent left AND right spacing */
+}
+
+/* Center room numbers in multi-game layout too */
+.game-row .room-numbers {
+  justify-self: center;
+}
+
+.game-row .team {
+  margin: 0;
+}
+
+.game-row .badge {
+  font-size: 38px;
+}
+
+/* Room numbers styling (no "Room" prefix) - white like time badges */
+.room-numbers {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  background: #0f2135;
+  border: 2px solid #2d4f74;
+  border-radius: 8px;
+  padding: 6px 12px;
+  white-space: nowrap;
+  text-align: center;
+  letter-spacing: .3px;
+}
+
+/* Optimize multi-game layout for 3 games */
+.team-container {
+  gap: 2px;
+}
+
+.game-row {
+  gap: 10px;
+  min-height: 28px;
+}
+
+.game-row .team {
+  font-size: 26px;
+  line-height: 1.0;
+  white-space: normal;
+}
+
+.game-row .room-numbers {
+  font-size: 22px;
+  padding: 3px 6px;
+  background: #0f2135;
+  border: 2px solid #2d4f74;
+  color: var(--text);
 }
 
 .team {
   font-weight: 800;
-  font-size: 35px;
+  font-size: 30px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -284,11 +383,11 @@ body {
 }
 
 .badge {
-  font-size: 40px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  font-size: 32px;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-weight: 800;
-  letter-spacing: .4px;
+  letter-spacing: .3px;
   white-space: nowrap;
   border: 2px solid #2d4f74;
   background: #0f2135;
@@ -318,46 +417,14 @@ body {
   text-align: center;
 }
 
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 24px 20px;
-  color: var(--muted);
-  border-top: 2px solid #1f3550;
-  font-size: 28px;
-}
 
-.legend .dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 6px;
-  transform: translateY(1px);
-}
-
-.dot-a {
-  background: var(--rink-a);
-}
-
-.dot-b {
-  background: var(--rink-b);
-}
-
-.dot-c {
-  background: var(--rink-c);
-}
-
-.legend span {
-  margin-right: 18px;
-}
 
 /* Optimized specifically for 1920x1080 TV Display */
 @media (min-width: 1800px) {
   .app-header {
     padding: 20px 40px;
     gap: 30px;
+    grid-template-columns: 350px 1fr 350px;
   }
   
   .logo img {
@@ -366,16 +433,16 @@ body {
   }
 
   .title {
-    font-size: 68px;
+    font-size: 72px;
     letter-spacing: 1px;
   }
 
   #clock {
-    font-size: 49px;
+    font-size: 36px;
   }
   
   .updated {
-    font-size: 25px;
+    font-size: 18px;
   }
 
   .panel h2 {
@@ -416,13 +483,10 @@ body {
   }
   
   .triple-split {
-    gap: 24px;
-    padding: 24px 40px;
+    gap: 16px;
+    padding: 16px 32px 20px;
   }
   
-  .panel {
-    padding: 24px 20px 18px;
-  }
   
   .chip {
     font-size: 32px;
@@ -430,16 +494,48 @@ body {
   }
   
   .list li {
-    padding: 18px 0;
-    gap: 14px;
+    padding: 12px 0;
+    gap: 10px;
   }
   
-  .status-chip {
-    margin-bottom: 10px;
-  }
   
   .content-row {
     gap: 20px;
+    margin: 0 20px; /* Increased margin for large screens to match header padding */
+  }
+  
+  .content-row.multi-game {
+    padding-left: 20px; /* Increased left spacing for large screens */
+  }
+  
+  .locker-rooms-chip {
+    font-size: 44px;
+    padding: 14px 20px;
+  }
+  
+  .room-numbers {
+    font-size: 42px;
+    padding: 10px 16px;
+  }
+  
+  .team-container {
+    gap: 4px;
+  }
+  
+  .game-row {
+    gap: 12px;
+    min-height: 32px;
+    padding: 0 20px; /* Increased padding for large screens */
+  }
+  
+  .game-row .team {
+    font-size: 30px;
+    line-height: 1.1;
+  }
+  
+  .game-row .room-numbers {
+    font-size: 28px;
+    padding: 6px 10px;
   }
 }
 
@@ -457,38 +553,19 @@ body {
   text-align: center;
 }
 
-/* centers the title in the middle column */
-
-.title {
-  font-size: 44px;
-  line-height: 1;
-  margin: 0;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-align: center;
-}
-
-.subtitle {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 24px;
-  font-weight: 600;
+.logo {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .status {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
 }
 
-#clock {
-  font-size: 40px;
-  font-weight: 800;
-}
-
-.updated {
-  color: var(--muted);
-  font-size: 26px;
-  margin-top: 6px;
-}
 
 
 /* TV Overscan safety and base optimizations */
@@ -498,7 +575,7 @@ body {
 
 /* Base font size increases for better TV readability */
 .title {
-  font-size: 58px;
+  font-size: 62px;
   line-height: 1;
   margin: 0;
   font-weight: 800;
@@ -507,13 +584,14 @@ body {
 }
 
 #clock {
-  font-size: 45px;
+  font-size: 32px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .updated {
   color: var(--muted);
-  font-size: 27px;
+  font-size: 20px;
   margin-top: 8px;
 }
 
@@ -560,14 +638,4 @@ body {
   color: var(--muted);
   font-size: 34px;
   text-align: center;
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 28px 22px;
-  color: var(--muted);
-  border-top: 2px solid #1f3550;
-  font-size: 30px;
 }
