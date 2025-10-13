@@ -336,7 +336,8 @@ function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoS
       
       const teamDiv = document.createElement("div");
       teamDiv.className = "team";
-      teamDiv.textContent = game;
+      // Apply appropriate scrolling based on context
+      setupScrollingTitle(teamDiv, game, context === "upcoming");
       gameRow.appendChild(teamDiv);
       
       // Use corresponding locker or fallback to combined
@@ -359,7 +360,8 @@ function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoS
     // Single game display (existing logic)
     const team = document.createElement("div");
     team.className = "team";
-    team.textContent = teamTitle;
+    // Apply appropriate scrolling based on context
+    setupScrollingTitle(team, teamTitle, context === "upcoming");
 
     const room = document.createElement("div");
     room.className = "room-numbers";
@@ -430,6 +432,10 @@ function renderLists(onIceList, upNextList, upcomingList) {
     // Start ticker after a brief delay to ensure DOM is ready
     setTimeout(() => {
       startTicker();
+      // After ticker is initialized, setup scrolling for upcoming titles
+      setTimeout(() => {
+        setupScrollingForUpcomingTitles();
+      }, 50);
     }, 100);
   }
 }
@@ -523,6 +529,146 @@ async function loadAndRender() {
     console.error("Failed to load sheet:", err);
     $("#updated").textContent = "Update failed—check network/sheet permissions.";
   }
+}
+
+/************************************
+| * SCROLLING TITLE HELPER
+| ************************************/
+function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
+  // Skip upcoming titles initially - they'll be handled after ticker setup
+  if (isUpcoming) {
+    // Just set the text content for now
+    teamElement.innerHTML = '';
+    const textSpan = document.createElement('span');
+    textSpan.className = 'team-text';
+    textSpan.textContent = titleText;
+    teamElement.appendChild(textSpan);
+    return;
+  }
+  
+  // Reset any previous scrolling setup and temporarily hide ellipsis
+  teamElement.classList.remove('scrolling', 'scrolling-upcoming');
+  teamElement.classList.add('checking-overflow');
+  teamElement.innerHTML = '';
+  
+  // Create a wrapper span for the text
+  const textSpan = document.createElement('span');
+  textSpan.className = 'team-text';
+  textSpan.textContent = titleText;
+  teamElement.appendChild(textSpan);
+  
+  // Force a reflow to ensure the element is rendered, then measure
+  setTimeout(() => {
+    // Force browser to calculate layout
+    teamElement.offsetHeight; // This forces a reflow
+    
+    const containerWidth = teamElement.offsetWidth;
+    const textWidth = textSpan.scrollWidth;
+    
+    // If textWidth is still 0, try alternative measurement
+    let actualTextWidth = textWidth;
+    if (textWidth === 0) {
+      // Create a temporary element to measure text width
+      const tempSpan = document.createElement('span');
+      tempSpan.style.visibility = 'hidden';
+      tempSpan.style.position = 'absolute';
+      tempSpan.style.whiteSpace = 'nowrap';
+      tempSpan.style.fontSize = window.getComputedStyle(teamElement).fontSize;
+      tempSpan.style.fontFamily = window.getComputedStyle(teamElement).fontFamily;
+      tempSpan.style.fontWeight = window.getComputedStyle(teamElement).fontWeight;
+      tempSpan.textContent = titleText;
+      document.body.appendChild(tempSpan);
+      actualTextWidth = tempSpan.offsetWidth;
+      document.body.removeChild(tempSpan);
+    }
+    
+    // Debug logging for all sections
+    console.log('Title check:', {
+      title: titleText,
+      containerWidth,
+      textWidth,
+      actualTextWidth,
+      overflow: actualTextWidth > containerWidth,
+      section: isUpcoming ? 'upcoming' : 'in-progress/next'
+    });
+    
+    // Remove the checking class
+    teamElement.classList.remove('checking-overflow');
+    
+    if (actualTextWidth > containerWidth) {
+      // Calculate how far we need to scroll to show the end
+      const scrollDistance = actualTextWidth - containerWidth + 20; // Add 20px padding
+      teamElement.style.setProperty('--scroll-distance', `-${scrollDistance}px`);
+      teamElement.classList.add('scrolling');
+      console.log('Applied scrolling class to:', titleText);
+    } else {
+      console.log('Text fits, no scrolling needed for:', titleText);
+    }
+  }, 250); // Increased delay to ensure proper DOM rendering
+}
+
+function setupScrollingForUpcomingTitles() {
+  const upcomingList = document.querySelector("#upcomingList");
+  const teamElements = upcomingList.querySelectorAll('.team');
+  
+  teamElements.forEach(teamElement => {
+    const textSpan = teamElement.querySelector('.team-text');
+    if (!textSpan) return;
+    
+    const titleText = textSpan.textContent;
+    
+    // Reset and check for overflow
+    teamElement.classList.remove('scrolling', 'scrolling-upcoming');
+    teamElement.classList.add('checking-overflow');
+    
+    // Measure after a brief delay to ensure ticker positioning is stable
+    setTimeout(() => {
+      // Force browser to calculate layout
+      teamElement.offsetHeight; // This forces a reflow
+      
+      const containerWidth = teamElement.offsetWidth;
+      const textWidth = textSpan.scrollWidth;
+      
+      // If textWidth is still 0, try alternative measurement
+      let actualTextWidth = textWidth;
+      if (textWidth === 0) {
+        // Create a temporary element to measure text width
+        const tempSpan = document.createElement('span');
+        tempSpan.style.visibility = 'hidden';
+        tempSpan.style.position = 'absolute';
+        tempSpan.style.whiteSpace = 'nowrap';
+        tempSpan.style.fontSize = window.getComputedStyle(teamElement).fontSize;
+        tempSpan.style.fontFamily = window.getComputedStyle(teamElement).fontFamily;
+        tempSpan.style.fontWeight = window.getComputedStyle(teamElement).fontWeight;
+        tempSpan.textContent = titleText;
+        document.body.appendChild(tempSpan);
+        actualTextWidth = tempSpan.offsetWidth;
+        document.body.removeChild(tempSpan);
+      }
+      
+      console.log('Upcoming title check (post-ticker):', {
+        title: titleText,
+        containerWidth,
+        textWidth,
+        actualTextWidth,
+        overflow: actualTextWidth > containerWidth,
+        tickerActive: teamElement.closest('.ticker') !== null
+      });
+      
+      // Remove the checking class
+      teamElement.classList.remove('checking-overflow');
+      
+      if (actualTextWidth > containerWidth) {
+        // Calculate how far we need to scroll to show the end
+        const scrollDistance = actualTextWidth - containerWidth + 20; // Add 20px padding
+        teamElement.style.setProperty('--scroll-distance', `-${scrollDistance}px`);
+        teamElement.classList.add('scrolling-upcoming');
+        console.log('Applied scrolling-upcoming class to:', titleText);
+      } else {
+        console.log('Text fits, no scrolling needed for:', titleText);
+      }
+    }, 150); // Slightly longer delay for upcoming section
+  });
 }
 
 function startClock() {

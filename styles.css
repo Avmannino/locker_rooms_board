@@ -374,6 +374,62 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
+  position: relative;
+}
+
+/* Temporarily hide ellipsis while checking for overflow */
+.team.checking-overflow {
+  text-overflow: clip !important;
+}
+
+/* Scrolling title animation for long titles */
+.team.scrolling,
+.team.scrolling-upcoming {
+  text-overflow: clip !important; /* Remove ellipsis when scrolling */
+}
+
+.team.scrolling .team-text {
+  display: inline-block;
+  animation: scroll-title 8s linear infinite;
+  animation-delay: 1s; /* Give time to read the beginning */
+}
+
+/* Faster scrolling for upcoming section */
+.team.scrolling-upcoming .team-text {
+  display: inline-block;
+  animation: scroll-title-upcoming 4s linear infinite;
+  animation-delay: 0.5s; /* Shorter delay for faster cycle */
+}
+
+@keyframes scroll-title {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(0); /* Pause at start */
+  }
+  80% {
+    transform: translateX(var(--scroll-distance)); /* Scroll to show end */
+  }
+  100% {
+    transform: translateX(var(--scroll-distance)); /* Pause at end before reset */
+  }
+}
+
+/* Faster scrolling animation for upcoming section to fit within ticker timing */
+@keyframes scroll-title-upcoming {
+  0% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(0); /* Shorter pause at start */
+  }
+  85% {
+    transform: translateX(var(--scroll-distance)); /* Scroll to show end */
+  }
+  100% {
+    transform: translateX(var(--scroll-distance)); /* Brief pause at end */
+  }
 }
 
 
@@ -461,6 +517,17 @@ body {
 
   .team {
     font-size: 38px;
+  }
+  
+  /* Maintain scrolling animation timing for larger screens */
+  .team.scrolling .team-text {
+    animation: scroll-title 8s linear infinite;
+    animation-delay: 1s;
+  }
+  
+  .team.scrolling-upcoming .team-text {
+    animation: scroll-title-upcoming 4s linear infinite;
+    animation-delay: 0.5s;
   }
   
   .meta {
@@ -617,6 +684,31 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+  position: relative;
+}
+
+/* Temporarily hide ellipsis while checking for overflow - TV optimization section */
+.team.checking-overflow {
+  text-overflow: clip !important;
+}
+
+/* Ensure scrolling works consistently across all screen sizes */
+.team.scrolling,
+.team.scrolling-upcoming,
+.team.checking-overflow {
+  text-overflow: clip !important; /* Use !important to override any other .team rules */
+}
+
+.team.scrolling .team-text {
+  display: inline-block;
+  animation: scroll-title 8s linear infinite;
+  animation-delay: 1s;
+}
+
+.team.scrolling-upcoming .team-text {
+  display: inline-block;
+  animation: scroll-title-upcoming 4s linear infinite;
+  animation-delay: 0.5s;
 }
 
 .badge {
