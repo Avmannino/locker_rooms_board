@@ -58,6 +58,27 @@
         <div id="upcomingEmpty" class="empty" hidden>No more teams scheduled today.</div>
       </section>
     </main>
+
+    <!-- Print View (hidden on screen, shown when printing) -->
+    <div class="print-view" style="display: none;">
+      <div class="print-header">
+        <h1 class="print-title">Wings Arena - Schedule & Locker Rooms</h1>
+        <div class="print-date" id="printDate">Loading...</div>
+      </div>
+      
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th class="print-time">Time</th>
+            <th class="print-event">Event</th>
+            <th class="print-rooms">Locker Rooms</th>
+          </tr>
+        </thead>
+        <tbody id="printTableBody">
+          <!-- Events will be populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script src="./app.js"></script>

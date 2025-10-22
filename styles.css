@@ -731,3 +731,136 @@ body {
   font-size: 34px;
   text-align: center;
 }
+
+/************************************
+ * PRINT STYLES
+ ************************************/
+@media print {
+  /* Hide the normal display */
+  .triple-split,
+  .app-header {
+    display: none !important;
+  }
+  
+  /* Reset page styles for print */
+  #app {
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+    margin: 0.5in !important;
+  }
+  
+  /* Show print view */
+  .print-view {
+    display: block !important;
+  }
+  
+  /* Print header */
+  .print-header {
+    text-align: center;
+    margin-bottom: 20pt;
+    border-bottom: 2pt solid black;
+    padding-bottom: 10pt;
+  }
+  
+  .print-title {
+    font-size: 18pt;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .print-date {
+    font-size: 12pt;
+    margin: 5pt 0 0 0;
+    color: #666;
+  }
+  
+  /* Print table */
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15pt;
+  }
+  
+  .print-table th {
+    background: #f0f0f0;
+    border: 1pt solid black;
+    padding: 8pt;
+    text-align: left;
+    font-weight: bold;
+    font-size: 11pt;
+  }
+  
+  .print-table td {
+    border: 1pt solid black;
+    padding: 6pt 8pt;
+    font-size: 10pt;
+    vertical-align: top;
+  }
+  
+  .print-table tr:nth-child(even) {
+    background: #f9f9f9;
+  }
+  
+  .print-time {
+    white-space: nowrap;
+    font-weight: bold;
+    width: 15%;
+  }
+  
+  .print-event {
+    width: 55%;
+  }
+  
+  .print-rooms {
+    width: 30%;
+    text-align: center;
+  }
+  
+  /* Status indicators */
+  .print-status {
+    font-size: 8pt;
+    padding: 2pt 4pt;
+    border-radius: 2pt;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  .print-status.in-progress {
+    background: #e8f5e8;
+    color: #2d5a2d;
+  }
+  
+  .print-status.up-next {
+    background: #fff3cd;
+    color: #856404;
+  }
+  
+  .print-status.upcoming {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  /* Page break control */
+  .print-table {
+    page-break-inside: auto;
+  }
+  
+  .print-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  .print-table thead {
+    display: table-header-group;
+  }
+}

@@ -522,6 +522,9 @@ async function loadAndRender() {
     const { onIceList, upNextList, upcomingList } = splitThreeSections(events, new Date());
 
     renderLists(onIceList, upNextList, upcomingList);
+    
+    // Update print view with all remaining events
+    updatePrintView(onIceList, upNextList, upcomingList);
 
     // Update timestamp
     $("#updated").textContent = `Updated: ${fmtUpdated(new Date(), FACILITY_TIMEZONE)}`;
@@ -668,6 +671,113 @@ function setupScrollingForUpcomingTitles() {
         console.log('Text fits, no scrolling needed for:', titleText);
       }
     }, 150); // Slightly longer delay for upcoming section
+  });
+}
+
+/************************************
+| * PRINT VIEW FUNCTIONALITY
+| ************************************/
+function updatePrintView(onIceList, upNextList, upcomingList) {
+  // Combine all events and sort chronologically
+  const allEvents = [];
+  
+  // Add current events with status
+  onIceList.forEach(ev => {
+    allEvents.push({
+      ...ev,
+      status: 'in-progress',
+      statusLabel: 'In Progress'
+    });
+  });
+  
+  // Add up next events
+  upNextList.forEach(ev => {
+    allEvents.push({
+      ...ev,
+      status: 'up-next',
+      statusLabel: 'Up Next'
+    });
+  });
+  
+  // Add upcoming events
+  upcomingList.forEach(ev => {
+    allEvents.push({
+      ...ev,
+      status: 'upcoming',
+      statusLabel: 'Upcoming'
+    });
+  });
+  
+  // Sort by start time
+  allEvents.sort((a, b) => a.start - b.start);
+  
+  // Update print date
+  const printDate = document.getElementById('printDate');
+  const now = new Date();
+  const dateStr = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: FACILITY_TIMEZONE
+  }).format(now);
+  printDate.textContent = `${dateStr} - Remaining Events`;
+  
+  // Populate print table
+  const tbody = document.getElementById('printTableBody');
+  tbody.innerHTML = '';
+  
+  allEvents.forEach(ev => {
+    const row = document.createElement('tr');
+    
+    // Time column
+    const timeCell = document.createElement('td');
+    timeCell.className = 'print-time';
+    const timeRange = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
+    timeCell.innerHTML = `
+      ${timeRange}<br>
+      <span class="print-status ${ev.status}">${ev.statusLabel}</span>
+    `;
+    
+    // Event name column
+    const eventCell = document.createElement('td');
+    eventCell.className = 'print-event';
+    
+    // Handle multi-game events
+    const teamTitle = ev.team || ev.titleRaw;
+    const games = teamTitle.split('&&').map(game => game.trim());
+    
+    if (games.length > 1) {
+      // Multi-game display
+      const gamesList = games.map(game => `• ${game}`).join('<br>');
+      eventCell.innerHTML = gamesList;
+    } else {
+      // Single game
+      eventCell.textContent = teamTitle;
+    }
+    
+    // Locker rooms column
+    const roomsCell = document.createElement('td');
+    roomsCell.className = 'print-rooms';
+    
+    if (games.length > 1) {
+      // Multi-game locker rooms
+      const lockerParts = (ev.rawLocker || ev.locker || "").split('&&').map(locker => locker.trim());
+      const roomsList = games.map((game, index) => {
+        const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
+        const gameLocker = parseLocker(rawGameLocker) || rawGameLocker || "—";
+        return gameLocker;
+      }).join('<br>');
+      roomsCell.innerHTML = roomsList;
+    } else {
+      // Single game locker room
+      roomsCell.textContent = ev.locker || "—";
+    }
+    
+    row.appendChild(timeCell);
+    row.appendChild(eventCell);
+    row.appendChild(roomsCell);
+    tbody.appendChild(row);
   });
 }
 
