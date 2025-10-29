@@ -863,4 +863,24 @@ body {
   .print-table thead {
     display: table-header-group;
   }
+  
+  /* Date header rows */
+  .print-date-header {
+    background: #e9ecef !important;
+  }
+  
+  .print-date-header td {
+    padding: 8pt !important;
+    font-size: 11pt !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    border-top: 2pt solid #333 !important;
+    border-bottom: 1pt solid #666 !important;
+  }
+  
+  /* Ensure date headers don't break across pages */
+  .print-date-header {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
 }

@@ -677,7 +677,130 @@ function setupScrollingForUpcomingTitles() {
 /************************************
 | * PRINT VIEW FUNCTIONALITY
 | ************************************/
-function updatePrintView(onIceList, upNextList, upcomingList) {
+async function updatePrintView(onIceList, upNextList, upcomingList) {
+  try {
+    // Fetch fresh data to get all events (not just today's)
+    const rows = USE_CSV
+      ? await fetchCSV(SHEET_CSV_URL)
+      : await fetchGVizJSON(SHEET_JSON_URL);
+
+    const allEvents = rowsToEvents(rows);
+    
+    // Get events for the next 5 days
+    const now = new Date();
+    const fiveDaysFromNow = new Date(now.getTime() + (5 * 24 * 60 * 60 * 1000));
+    
+    // Filter events for the next 5 days
+    const next5DaysEvents = allEvents.filter(ev => {
+      return ev.start >= now && ev.start <= fiveDaysFromNow;
+    });
+    
+    // Sort by start time
+    next5DaysEvents.sort((a, b) => a.start - b.start);
+    
+    // Update print date header
+    const printDate = document.getElementById('printDate');
+    const startDateStr = new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      timeZone: FACILITY_TIMEZONE
+    }).format(now);
+    const endDateStr = new Intl.DateTimeFormat('en-US', {
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: FACILITY_TIMEZONE
+    }).format(fiveDaysFromNow);
+    printDate.textContent = `${startDateStr} - ${endDateStr} (Next 5 Days)`;
+    
+    // Populate print table with date grouping
+    const tbody = document.getElementById('printTableBody');
+    tbody.innerHTML = '';
+    
+    let currentDate = null;
+    
+    next5DaysEvents.forEach(ev => {
+      // Check if we need a new date header
+      const eventDate = new Date(ev.start);
+      const eventDateStr = new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        timeZone: FACILITY_TIMEZONE
+      }).format(eventDate);
+      
+      if (eventDateStr !== currentDate) {
+        currentDate = eventDateStr;
+        
+        // Add date header row
+        const dateRow = document.createElement('tr');
+        dateRow.className = 'print-date-header';
+        const dateCell = document.createElement('td');
+        dateCell.colSpan = 3;
+        dateCell.innerHTML = `<strong>${eventDateStr}</strong>`;
+        dateRow.appendChild(dateCell);
+        tbody.appendChild(dateRow);
+      }
+      
+      // Add event row
+      const row = document.createElement('tr');
+      
+      // Time column
+      const timeCell = document.createElement('td');
+      timeCell.className = 'print-time';
+      const timeRange = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
+      timeCell.textContent = timeRange;
+      
+      // Event name column
+      const eventCell = document.createElement('td');
+      eventCell.className = 'print-event';
+      
+      // Handle multi-game events
+      const teamTitle = ev.team || ev.titleRaw;
+      const games = teamTitle.split('&&').map(game => game.trim());
+      
+      if (games.length > 1) {
+        // Multi-game display
+        const gamesList = games.map(game => `• ${game}`).join('<br>');
+        eventCell.innerHTML = gamesList;
+      } else {
+        // Single game
+        eventCell.textContent = teamTitle;
+      }
+      
+      // Locker rooms column
+      const roomsCell = document.createElement('td');
+      roomsCell.className = 'print-rooms';
+      
+      if (games.length > 1) {
+        // Multi-game locker rooms
+        const lockerParts = (ev.rawLocker || ev.locker || "").split('&&').map(locker => locker.trim());
+        const roomsList = games.map((game, index) => {
+          const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
+          const gameLocker = parseLocker(rawGameLocker) || rawGameLocker || "—";
+          return gameLocker;
+        }).join('<br>');
+        roomsCell.innerHTML = roomsList;
+      } else {
+        // Single game locker room
+        roomsCell.textContent = ev.locker || "—";
+      }
+      
+      row.appendChild(timeCell);
+      row.appendChild(eventCell);
+      row.appendChild(roomsCell);
+      tbody.appendChild(row);
+    });
+    
+  } catch (err) {
+    console.error("Failed to load events for print view:", err);
+    // Fallback to current day events if fetch fails
+    updatePrintViewFallback(onIceList, upNextList, upcomingList);
+  }
+}
+
+// Fallback function for current day events if 5-day fetch fails
+function updatePrintViewFallback(onIceList, upNextList, upcomingList) {
   // Combine all events and sort chronologically
   const allEvents = [];
   
@@ -721,7 +844,7 @@ function updatePrintView(onIceList, upNextList, upcomingList) {
     day: 'numeric',
     timeZone: FACILITY_TIMEZONE
   }).format(now);
-  printDate.textContent = `${dateStr} - Remaining Events`;
+  printDate.textContent = `${dateStr} - Remaining Events (Fallback)`;
   
   // Populate print table
   const tbody = document.getElementById('printTableBody');
