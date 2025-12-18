@@ -5,6 +5,20 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBHs9gkU
 // Toggle if you want to fetch CSV instead of JSON.
 const USE_CSV = true;
 
+// Toggle for "Presented By" sponsor section
+const SHOW_PRESENTED_BY = true;
+
+// Locker branding configuration
+const LOCKER_BRANDING = {
+  '1': { name: 'Away Locker', logo: './assets/locker_generic.png' },
+  '2': { name: 'Away Locker', logo: './assets/locker_generic.png' },
+  '3': { name: 'Stateline', logo: './assets/stateline_logo.png' },
+  '4': { name: 'GSC', logo: './assets/gsc_logo.png' },
+  '5': { name: 'GCDS Boys', logo: './assets/gcds_logo.png' },
+  '6': { name: 'GCDS Girls', logo: './assets/gcds_logo.png' },
+  'FLEX': { name: 'FLEX', logo: './assets/locker_generic.png' }
+};
+
 /************************************
  * GENERAL SETTINGS (tweak as needed)
  ************************************/
@@ -70,24 +84,75 @@ function parseLocker(text) {
   if (listMatch) {
     let segment = (listMatch[1] || "");
 
-    // Normalize common separators to a single pipe so we can split safely
-    // (&, +, " and ", commas, slashes) - but protect && for game separation
-    segment = segment
-      .replace(/\s+(and)\s+/gi, "|")
-      .replace(/(?<!&)&(?!&)/g, "|") // Replace single & but not &&
-      .replace(/[+]/g, "|")
-      .replace(/[,/]/g, "|")
-      .replace(/\s*\|\s*/g, "|"); // collapse spaces around pipes
+    // Handle the specific formats:
+    // Simple: "2 | 4" or "2, 4"
+    // Detailed: "2 (Team 1) | 4 (Team 2)" or "2 (Red, White), 4 (Bantam A)"
 
-    // Extract entries like: 1, 3 (Red), A1, 4 (CT Beer)
-    const entries = [];
-    const reEntry = /([A-Za-z0-9\-]+(?:\s*\([^)]+\))?)/g;
-    let em;
-    while ((em = reEntry.exec(segment)) !== null) {
-      const val = (em[1] || "").trim();
-      if (val) entries.push(val);
+    // First, normalize pipe separators to a unique marker (outside parens only)
+    let normalized = "";
+    let parenDepth = 0;
+    for (const char of segment) {
+      if (char === '(') {
+        parenDepth++;
+        normalized += char;
+      } else if (char === ')') {
+        parenDepth--;
+        normalized += char;
+      } else if (char === '|' && parenDepth === 0) {
+        normalized += '<<<SEP>>>';
+      } else if (char === '&' && parenDepth === 0 && !segment.includes('&&')) {
+        normalized += '<<<SEP>>>';
+      } else if (char === '+' && parenDepth === 0) {
+        normalized += '<<<SEP>>>';
+      } else if (char === '/' && parenDepth === 0) {
+        normalized += '<<<SEP>>>';
+      } else {
+        normalized += char;
+      }
     }
-    if (entries.length) return entries.join(", ");
+
+    // Also handle "and" outside parentheses
+    normalized = normalized.replace(/\s+and\s+/gi, '<<<SEP>>>');
+
+    // Now split by our marker OR by commas outside parentheses
+    const entries = [];
+    let current = "";
+    parenDepth = 0;
+
+    for (let i = 0; i < normalized.length; i++) {
+      const char = normalized[i];
+      // Check for our separator marker
+      if (normalized.substring(i, i + 9) === '<<<SEP>>>') {
+        if (current.trim()) entries.push(current.trim());
+        current = "";
+        i += 8; // Skip the marker (loop will add 1 more)
+        continue;
+      }
+      if (char === '(') {
+        parenDepth++;
+        current += char;
+      } else if (char === ')') {
+        parenDepth--;
+        current += char;
+      } else if (char === ',' && parenDepth === 0) {
+        if (current.trim()) entries.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) entries.push(current.trim());
+
+    // Now extract just the locker entries (number + optional parenthesized team name)
+    const lockerEntries = [];
+    for (const entry of entries) {
+      // Match: number followed by optional space and parenthesized content
+      const match = entry.match(/(\d+(?:\s*\([^)]*(?:\([^)]*\)[^)]*)*\))?)/);
+      if (match && match[1]) {
+        lockerEntries.push(match[1].trim());
+      }
+    }
+    if (lockerEntries.length) return lockerEntries.join(", ");
   }
 
   // 2) Simple single-room forms: "Locker 3", "Room 12", "LR 2", "LKR-A"
@@ -123,7 +188,13 @@ function cleanTeamName(title) {
  ************************************/
 async function fetchGVizJSON(url) {
   const res = await fetch(url, { cache: "no-store" });
+  
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${res.statusText} for URL: ${url}`);
+  }
+  
   const text = await res.text();
+  
   // Strip JS wrapper: google.visualization.Query.setResponse(...)
   const json = JSON.parse(text.replace(/^[^{]+/, "").replace(/;?\s*$/, ""));
   const rows = json.table.rows || [];
@@ -134,6 +205,11 @@ async function fetchGVizJSON(url) {
 
 async function fetchCSV(url) {
   const res = await fetch(url, { cache: "no-store" });
+  
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${res.statusText} for URL: ${url}`);
+  }
+  
   const csv = await res.text();
   return parseCsv(csv);
 }
@@ -297,97 +373,171 @@ function renderLockerBadgeContent(container, lockerStr) {
 /************************************
  * RENDER
  ************************************/
-function createRow(ev, context /* "on-ice" | "up-next" | "upcoming" */, isInTwoSectionMode = false) {
-  const li = document.createElement("li");
+function createLockerRows(ev, context) {
+  const lockerRows = [];
 
-  // Content row with time, team, and room aligned horizontally
-  const contentRow = document.createElement("div");
-  contentRow.className = "content-row";
+  // Parse the locker assignments from the description
+  const lockerStr = ev.locker || "—";
 
-  // Time badge
-  const time = document.createElement("div");
-  time.className = "badge time";
-  const range = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
-  time.textContent = range || "";
+  if (lockerStr === "—") {
+    return lockerRows;
+  }
 
-  // Warning if about to start (for "up-next" column)
-  if (context === "up-next") {
-    const minutesTo = Math.round((ev.start - new Date()) / 60000);
-    if (minutesTo <= 10) {
-      time.classList.add("warn");
+  // Smart split: don't split on commas inside parentheses
+  // e.g., "2 (Red, White), 4 (Bantam A)" should become ["2 (Red, White)", "4 (Bantam A)"]
+  const lockerAssignments = [];
+  let current = "";
+  let parenDepth = 0;
+
+  for (const char of lockerStr) {
+    if (char === '(') {
+      parenDepth++;
+      current += char;
+    } else if (char === ')') {
+      parenDepth--;
+      current += char;
+    } else if (char === ',' && parenDepth === 0) {
+      // Only split on comma when not inside parentheses
+      if (current.trim()) {
+        lockerAssignments.push(current.trim());
+      }
+      current = "";
+    } else {
+      current += char;
     }
   }
-
-  // Handle multi-game events with && separator
-  const teamTitle = ev.team || ev.titleRaw;
-  const teamContainer = document.createElement("div");
-  teamContainer.className = "team-container";
-  
-  // Check for multi-game separator
-  const games = teamTitle.split('&&').map(game => game.trim());
-  const lockerParts = (ev.rawLocker || ev.locker || "").split('&&').map(locker => locker.trim());
-  
-  if (games.length > 1) {
-    // Multi-game display
-    contentRow.classList.add("multi-game");
-    games.forEach((game, index) => {
-      const gameRow = document.createElement("div");
-      gameRow.className = "game-row";
-      
-      const teamDiv = document.createElement("div");
-      teamDiv.className = "team";
-      // Apply appropriate scrolling based on context
-      setupScrollingTitle(teamDiv, game, context === "upcoming");
-      gameRow.appendChild(teamDiv);
-      
-      // Use corresponding locker or fallback to combined
-      const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
-      const gameLocker = parseLocker(rawGameLocker) || rawGameLocker || "—";
-      const roomDiv = document.createElement("div");
-      roomDiv.className = "room-numbers";
-      
-      // Just render the numbers/letters without "Room" prefix
-      renderLockerBadgeContent(roomDiv, gameLocker);
-      gameRow.appendChild(roomDiv);
-      
-      teamContainer.appendChild(gameRow);
-    });
-    
-    // For multi-games, we structure differently
-    contentRow.appendChild(time);
-    contentRow.appendChild(teamContainer);
-  } else {
-    // Single game display (existing logic)
-    const team = document.createElement("div");
-    team.className = "team";
-    // Apply appropriate scrolling based on context
-    setupScrollingTitle(team, teamTitle, context === "upcoming");
-
-    const room = document.createElement("div");
-    room.className = "room-numbers";
-
-    // Just render the numbers/letters without "Room" prefix
-    renderLockerBadgeContent(room, ev.locker);
-
-    contentRow.appendChild(time);
-    contentRow.appendChild(team);
-    contentRow.appendChild(room);
+  // Don't forget the last segment
+  if (current.trim()) {
+    lockerAssignments.push(current.trim());
   }
 
-  // Assemble the row
-  li.appendChild(contentRow);
-  return li;
+  lockerAssignments.forEach(assignment => {
+    // Extract locker number/name and optional team name - support FLEX and numeric lockers
+    const match = assignment.match(/^(FLEX|\d+)(?:\s*\((.+)\))?$/i);
+    if (match) {
+      const lockerNum = match[1].toUpperCase(); // Handle FLEX case-insensitively
+      const teamName = match[2] || null; // Only use explicit team names, not event titles
+
+      // Handle FLEX lockers or check if numeric locker exists in branding
+      if (lockerNum === 'FLEX' || LOCKER_BRANDING[lockerNum]) {
+        lockerRows.push(renderBrandedLockerRoom(lockerNum, teamName ? teamName.trim() : null));
+      }
+    }
+  });
+  
+  // Fallback: if no matches found, try the old method for backward compatibility
+  if (lockerRows.length === 0) {
+    // Handle multi-game events with && separator (legacy support)
+    const teamTitle = ev.team || ev.titleRaw;
+    const games = teamTitle.split('&&').map(game => game.trim());
+    const lockerParts = (ev.rawLocker || ev.locker || "").split('&&').map(locker => locker.trim());
+    
+    if (games.length > 1) {
+      // Multi-game: create a row for each game/locker combination
+      games.forEach((game, index) => {
+        const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
+        const gameLocker = parseLocker(rawGameLocker) || rawGameLocker || "—";
+        
+        // Parse individual locker numbers from the gameLocker string
+        const lockerNumbers = gameLocker.split(/[,|]/).map(l => l.trim().replace(/[^\d]/g, '')).filter(Boolean);
+        
+        lockerNumbers.forEach(lockerNum => {
+          if (LOCKER_BRANDING[lockerNum]) {
+            // Only use game name if it looks like a team name (not an event title)
+            const teamName = game.toLowerCase().includes('skate') || 
+                           game.toLowerCase().includes('lesson') || 
+                           game.toLowerCase().includes('practice') ? null : game;
+            lockerRows.push(renderBrandedLockerRoom(lockerNum, teamName));
+          }
+        });
+      });
+    } else {
+      // Single game: create rows for each locker
+      const lockerNumbers = lockerStr.split(/[,|]/).map(l => l.trim().replace(/[^\d]/g, '')).filter(Boolean);
+      
+      // Only use team name if it's actually a team (not an event like "Public Skate")
+      const actualTeamName = ev.team || ev.titleRaw || teamTitle;
+      const isEventTitle = actualTeamName.toLowerCase().includes('skate') || 
+                          actualTeamName.toLowerCase().includes('lesson') || 
+                          actualTeamName.toLowerCase().includes('practice') ||
+                          actualTeamName.toLowerCase().includes('public');
+      
+      lockerNumbers.forEach(lockerNum => {
+        if (LOCKER_BRANDING[lockerNum]) {
+          lockerRows.push(renderBrandedLockerRoom(lockerNum, isEventTitle ? null : actualTeamName));
+        }
+      });
+    }
+  }
+  
+  return lockerRows;
+}
+
+function createEventPane(ev, context, chipClass, chipText) {
+  const eventPane = document.createElement("div");
+  eventPane.className = "event-pane";
+  
+  // Get event title and match description
+  const matchDescription = parseEventDescription(ev.description);
+  const displayTitle = matchDescription || ev.team || ev.titleRaw;
+  
+  // Time display
+  const timeRange = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
+  
+  eventPane.innerHTML = `
+    <div class="status-row">
+      <span class="chip ${chipClass}">${chipText}</span>
+      <span class="event-title">${displayTitle}</span>
+      <span class="locker-rooms-chip">Locker Rooms</span>
+    </div>
+    <div class="info-row">
+      <div class="time-badge">${timeRange}</div>
+      <div class="description">${matchDescription || ''}</div>
+      <ul class="locker-list"></ul>
+    </div>
+  `;
+  
+  // Add locker rows
+  const lockerList = eventPane.querySelector('.locker-list');
+  const lockerRows = createLockerRows(ev, context);
+  lockerRows.forEach(row => lockerList.appendChild(row));
+
+  // Apply adaptive sizing based on number of lockers (0-6 teams)
+  const numLockers = lockerRows.length;
+  if (numLockers <= 2) {
+    lockerList.classList.add('locker-list-xl');
+  } else if (numLockers <= 4) {
+    lockerList.classList.add('locker-list-large');
+  } else if (numLockers === 5) {
+    lockerList.classList.add('locker-list-medium');
+  } else if (numLockers >= 6) {
+    lockerList.classList.add('locker-list-compact');
+  }
+  
+  // Setup scrolling for long titles
+  const titleElement = eventPane.querySelector('.event-title');
+  if (titleElement) {
+    setTimeout(() => {
+      setupScrollingTitle(titleElement, displayTitle, context === 'upcoming');
+    }, 250);
+  }
+  
+  return eventPane;
 }
 
 function renderLists(onIceList, upNextList, upcomingList) {
-  const onIceUL = $("#onIceList");
-  const upNextUL = $("#upNextList");
-  const upcomingUL = $("#upcomingList");
+  // Stop any existing ticker before clearing content
+  stopTicker();
+  
+  const onIceContainer = $("#onIceContainer");
+  const upNextContainer = $("#upNextContainer");
+  const upcomingContainer = $("#upcomingContainer");
   const mainContainer = $(".triple-split");
   
-  onIceUL.innerHTML = "";
-  upNextUL.innerHTML = "";
-  upcomingUL.innerHTML = "";
+  // Clear previous content
+  onIceContainer.innerHTML = "";
+  upNextContainer.innerHTML = "";
+  upcomingContainer.innerHTML = "";
 
   // Determine if we should use two-section mode
   const isInTwoSectionMode = onIceList.length === 0;
@@ -395,14 +545,8 @@ function renderLists(onIceList, upNextList, upcomingList) {
   // Update layout class
   if (isInTwoSectionMode) {
     mainContainer.classList.add("two-section");
-    // Update chip text for two-section mode
-    const upNextChip = $(".panel-up-next .chip-up-next");
-    if (upNextChip) upNextChip.textContent = "Up Next";
   } else {
     mainContainer.classList.remove("two-section");
-    // Update chip text for three-section mode
-    const upNextChip = $(".panel-up-next .chip-up-next");
-    if (upNextChip) upNextChip.textContent = "Next";
   }
 
   // On Ice section
@@ -410,7 +554,10 @@ function renderLists(onIceList, upNextList, upcomingList) {
     $("#onIceEmpty").hidden = false;
   } else {
     $("#onIceEmpty").hidden = true;
-    onIceList.forEach(ev => onIceUL.appendChild(createRow(ev, "on-ice", isInTwoSectionMode)));
+    onIceList.forEach(ev => {
+      const eventPane = createEventPane(ev, "on-ice", "chip-on-ice", "In Progress");
+      onIceContainer.appendChild(eventPane);
+    });
   }
 
   // Up Next section
@@ -418,25 +565,37 @@ function renderLists(onIceList, upNextList, upcomingList) {
     $("#upNextEmpty").hidden = false;
   } else {
     $("#upNextEmpty").hidden = true;
-    upNextList.forEach(ev => upNextUL.appendChild(createRow(ev, "up-next", isInTwoSectionMode)));
+    const chipText = isInTwoSectionMode ? "Up Next" : "Next";
+    upNextList.forEach(ev => {
+      const eventPane = createEventPane(ev, "up-next", "chip-up-next", chipText);
+      upNextContainer.appendChild(eventPane);
+    });
   }
   
   // Upcoming section
   if (upcomingList.length === 0) {
     $("#upcomingEmpty").hidden = false;
-    stopTicker(); // Stop ticker if no items
+    stopTicker();
   } else {
     $("#upcomingEmpty").hidden = true;
-    upcomingList.forEach(ev => upcomingUL.appendChild(createRow(ev, "upcoming", isInTwoSectionMode)));
     
-    // Start ticker after a brief delay to ensure DOM is ready
-    setTimeout(() => {
-      startTicker();
-      // After ticker is initialized, setup scrolling for upcoming titles
+    // Create all event panes but only show one at a time
+    upcomingList.forEach((ev, index) => {
+      const eventPane = createEventPane(ev, "upcoming", "chip-upcoming", "Upcoming");
+      if (index === 0) {
+        eventPane.classList.add("active");
+      }
+      upcomingContainer.appendChild(eventPane);
+    });
+    
+    // Start ticker for upcoming events if there are multiple
+    if (upcomingList.length > 1) {
       setTimeout(() => {
-        setupScrollingForUpcomingTitles();
-      }, 50);
-    }, 100);
+        startTickerForEventPanes();
+      }, 100);
+    } else {
+      stopTicker();
+    }
   }
 }
 
@@ -447,13 +606,13 @@ let tickerInterval = null;
 let currentTickerIndex = 0;
 let tickerItems = [];
 
-function startTicker() {
-  const ul = document.querySelector("#upcomingList");
-  tickerItems = Array.from(ul.children);
+function startTickerForEventPanes() {
+  const container = document.querySelector("#upcomingContainer");
+  tickerItems = Array.from(container.children);
 
   // Reset any previous ticker state
-  ul.classList.remove("ticker");
-  tickerItems.forEach(li => li.classList.remove("active", "exit"));
+  container.classList.remove("ticker");
+  tickerItems.forEach(pane => pane.classList.remove("active", "exit"));
 
   // If 0 or 1 items: no ticker — show the single item normally
   if (tickerItems.length <= 1) {
@@ -461,11 +620,11 @@ function startTicker() {
       clearInterval(tickerInterval);
       tickerInterval = null;
     }
-    return; // with no .ticker class, CSS will render items normally
+    return;
   }
 
   // Ticker mode ONLY when 2+ items
-  ul.classList.add("ticker");
+  container.classList.add("ticker");
 
   // Clear any existing interval
   if (tickerInterval) clearInterval(tickerInterval);
@@ -491,7 +650,12 @@ function startTicker() {
       next.classList.add("active");
       currentTickerIndex = nextIndex;
     }, 400);
-  }, 8000);
+  }, 5000);
+}
+
+// Keep the old function for backward compatibility but redirect to new one
+function startTicker() {
+  startTickerForEventPanes();
 }
 
 function stopTicker() {
@@ -500,13 +664,21 @@ function stopTicker() {
     tickerInterval = null;
   }
 
-  const upcomingList = $("#upcomingList");
-  upcomingList.classList.remove('ticker');
+  // Reset ticker state
+  currentTickerIndex = 0;
+  
+  // Remove ticker class from container
+  const upcomingContainer = $("#upcomingContainer");
+  if (upcomingContainer) {
+    upcomingContainer.classList.remove('ticker');
+  }
 
   // Reset all items to normal state
   tickerItems.forEach(item => {
     item.classList.remove('active', 'exit');
   });
+  
+  tickerItems = [];
 }
 
 /************************************
@@ -530,6 +702,12 @@ async function loadAndRender() {
     $("#updated").textContent = `Updated: ${fmtUpdated(new Date(), FACILITY_TIMEZONE)}`;
   } catch (err) {
     console.error("Failed to load sheet:", err);
+    console.error("Error details:", {
+      message: err.message,
+      stack: err.stack,
+      url: USE_CSV ? SHEET_CSV_URL : SHEET_JSON_URL,
+      timestamp: new Date().toISOString()
+    });
     $("#updated").textContent = "Update failed—check network/sheet permissions.";
   }
 }
@@ -904,6 +1082,57 @@ function updatePrintViewFallback(onIceList, upNextList, upcomingList) {
   });
 }
 
+function updatePresentedByVisibility() {
+  const presentedByElement = $("#presentedBy");
+  if (presentedByElement) {
+    presentedByElement.style.display = SHOW_PRESENTED_BY ? 'flex' : 'none';
+  }
+}
+
+function renderBrandedLockerRoom(lockerNumber, teamName) {
+  const branding = LOCKER_BRANDING[lockerNumber];
+  
+  if (!branding) {
+    // Fallback for unmapped lockers
+    const lockerRow = document.createElement('li');
+    lockerRow.className = 'locker-row';
+    lockerRow.innerHTML = `
+      <div class="locker-logo-placeholder"></div>
+      <span class="locker-brand locker-${lockerNumber}">
+        <span class="locker-name-part">Locker ${lockerNumber}</span>${teamName ? ': ' + teamName : ''}
+      </span>
+      <span></span>
+    `;
+    return lockerRow;
+  }
+  
+  const lockerRow = document.createElement('li');
+  lockerRow.className = 'locker-row';
+  
+  lockerRow.innerHTML = `
+    <img src="${branding.logo}" alt="${branding.name}" class="locker-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+    <div class="locker-logo-placeholder" style="display: none;"></div>
+    <span class="locker-brand locker-${lockerNumber}">
+      <span class="locker-name-part">${branding.name} (${lockerNumber})</span>${teamName ? ': ' + teamName : ''}
+    </span>
+    <span></span>
+  `;
+  
+  return lockerRow;
+}
+
+function parseEventDescription(description) {
+  if (!description) return null;
+  
+  // Look for "Description: " prefix
+  const descMatch = description.match(/^Description:\s*(.+)/i);
+  if (descMatch) {
+    return descMatch[1].trim();
+  }
+  
+  return null;
+}
+
 function startClock() {
   const tick = () => { $("#clock").textContent = fmtClock(new Date(), FACILITY_TIMEZONE); };
   tick();
@@ -911,6 +1140,7 @@ function startClock() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  updatePresentedByVisibility();
   startClock();
   loadAndRender();
   setInterval(loadAndRender, REFRESH_EVERY_MS);

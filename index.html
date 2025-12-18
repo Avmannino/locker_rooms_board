@@ -17,10 +17,14 @@
         <img src="./assets/logo.png" alt="Wings Arena" />
       </div>
 
-      <!-- CENTER: Title/Sub -->
+      <!-- CENTER: Title + Presented By -->
       <div class="brand">
         <h1 class="title">SCHEDULE & LOCKER ROOMS</h1>
-        <!-- <div class="subtitle">Now / Next</div> -->
+        <div class="presented-by" id="presentedBy">
+          <span class="presented-by-text">PRESENTED BY</span>
+          <img src="./assets/presented_by.png" alt="Sponsor" class="sponsor-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <div class="sponsor-logo-placeholder" style="display: none;">SPONSOR LOGO</div>
+        </div>
       </div>
 
       <!-- RIGHT: Clock + Updated -->
@@ -32,29 +36,17 @@
 
     <main class="triple-split">
       <section class="panel panel-on-ice">
-        <div class="panel-header-new">
-          <span class="chip chip-on-ice">In Progress</span>
-          <span class="locker-rooms-chip">Locker Rooms</span>
-        </div>
-        <ul id="onIceList" class="list" role="list"></ul>
+        <div id="onIceContainer"></div>
         <div id="onIceEmpty" class="empty" hidden>No Teams On Ice</div>
       </section>
 
       <section class="panel panel-up-next">
-        <div class="panel-header-new">
-          <span class="chip chip-up-next">Next</span>
-          <span class="locker-rooms-chip">Locker Rooms</span>
-        </div>
-        <ul id="upNextList" class="list" role="list"></ul>
+        <div id="upNextContainer"></div>
         <div id="upNextEmpty" class="empty" hidden>No Teams Up Next</div>
       </section>
 
       <section class="panel panel-upcoming">
-        <div class="panel-header-new">
-          <span class="chip chip-upcoming">Upcoming</span>
-          <span class="locker-rooms-chip">Locker Rooms</span>
-        </div>
-        <ul id="upcomingList" class="list" role="list"></ul>
+        <div id="upcomingContainer"></div>
         <div id="upcomingEmpty" class="empty" hidden>No more teams scheduled today.</div>
       </section>
     </main>
