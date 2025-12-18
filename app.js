@@ -479,7 +479,8 @@ function createEventPane(ev, context, chipClass, chipText) {
   
   // Get event title and match description
   const matchDescription = parseEventDescription(ev.description);
-  const displayTitle = matchDescription || ev.team || ev.titleRaw;
+  // Always use team name as title (quoted descriptions go in the description area)
+  const displayTitle = ev.team || ev.titleRaw;
   
   // Time display
   const timeRange = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
@@ -650,7 +651,7 @@ function startTickerForEventPanes() {
       next.classList.add("active");
       currentTickerIndex = nextIndex;
     }, 400);
-  }, 5000);
+  }, 7000); // Changed to 7000 (7 seconds)
 }
 
 // Keep the old function for backward compatibility but redirect to new one
@@ -1124,8 +1125,8 @@ function renderBrandedLockerRoom(lockerNumber, teamName) {
 function parseEventDescription(description) {
   if (!description) return null;
   
-  // Look for "Description: " prefix
-  const descMatch = description.match(/^Description:\s*(.+)/i);
+  // Look for "Description: " prefix with quoted text
+  const descMatch = description.match(/^Description:\s*"([^"]+)"/i);
   if (descMatch) {
     return descMatch[1].trim();
   }
