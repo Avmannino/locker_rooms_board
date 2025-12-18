@@ -6,7 +6,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBHs9gkU
 const USE_CSV = true;
 
 // Toggle for "Presented By" sponsor section
-const SHOW_PRESENTED_BY = true;
+const SHOW_PRESENTED_BY = false;
 
 // Locker branding configuration
 const LOCKER_BRANDING = {
