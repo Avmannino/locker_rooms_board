@@ -12,10 +12,10 @@ const SHOW_PRESENTED_BY = false;
 const LOCKER_BRANDING = {
   '1': { name: 'Away Locker', logo: './assets/locker_generic.png' },
   '2': { name: 'Away Locker', logo: './assets/locker_generic.png' },
-  '3': { name: 'Stateline', logo: './assets/stateline_logo.png' },
-  '4': { name: 'GSC', logo: './assets/gsc_logo.png' },
-  '5': { name: 'GCDS Boys', logo: './assets/gcds_logo.png' },
-  '6': { name: 'GCDS Girls', logo: './assets/gcds_logo.png' },
+  '3': { name: 'Stateline Locker Room', logo: './assets/stateline_logo.png' },
+  '4': { name: 'GSC Locker Room', logo: './assets/gsc_logo.png' },
+  '5': { name: 'GCDS Boys Locker Room', logo: './assets/gcds_logo.png' },
+  '6': { name: 'GCDS Girls Locker Room', logo: './assets/gcds_logo.png' },
   'FLEX': { name: 'FLEX', logo: './assets/locker_generic.png' }
 };
 
@@ -488,13 +488,17 @@ function createEventPane(ev, context, chipClass, chipText) {
   eventPane.innerHTML = `
     <div class="status-row">
       <span class="chip ${chipClass}">${chipText}</span>
-      <span class="event-title">${displayTitle}</span>
+      <div class="time-badge">${timeRange}</div>
       <span class="locker-rooms-chip">Locker Rooms</span>
     </div>
-    <div class="info-row">
-      <div class="time-badge">${timeRange}</div>
-      <div class="description">${matchDescription || ''}</div>
-      <ul class="locker-list"></ul>
+    <div class="info-split">
+      <div class="title-description-area">
+        <div class="large-title"></div>
+        <div class="description">${matchDescription || ''}</div>
+      </div>
+      <div class="locker-area">
+        <ul class="locker-list"></ul>
+      </div>
     </div>
   `;
   
@@ -515,11 +519,11 @@ function createEventPane(ev, context, chipClass, chipText) {
     lockerList.classList.add('locker-list-compact');
   }
   
-  // Setup scrolling for long titles
-  const titleElement = eventPane.querySelector('.event-title');
-  if (titleElement) {
+  // Setup scrolling for long titles in the left half
+  const largeTitleElement = eventPane.querySelector('.large-title');
+  if (largeTitleElement) {
     setTimeout(() => {
-      setupScrollingTitle(titleElement, displayTitle, context === 'upcoming');
+      setupScrollingTitle(largeTitleElement, displayTitle, context === 'upcoming');
     }, 250);
   }
   
@@ -717,17 +721,6 @@ async function loadAndRender() {
 | * SCROLLING TITLE HELPER
 | ************************************/
 function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
-  // Skip upcoming titles initially - they'll be handled after ticker setup
-  if (isUpcoming) {
-    // Just set the text content for now
-    teamElement.innerHTML = '';
-    const textSpan = document.createElement('span');
-    textSpan.className = 'team-text';
-    textSpan.textContent = titleText;
-    teamElement.appendChild(textSpan);
-    return;
-  }
-  
   // Reset any previous scrolling setup and temporarily hide ellipsis
   teamElement.classList.remove('scrolling', 'scrolling-upcoming');
   teamElement.classList.add('checking-overflow');
@@ -740,6 +733,8 @@ function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
   teamElement.appendChild(textSpan);
   
   // Force a reflow to ensure the element is rendered, then measure
+  // Use longer delay for upcoming titles to ensure ticker is stable
+  const delay = isUpcoming ? 500 : 250;
   setTimeout(() => {
     // Force browser to calculate layout
     teamElement.offsetHeight; // This forces a reflow
@@ -781,12 +776,13 @@ function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
       // Calculate how far we need to scroll to show the end
       const scrollDistance = actualTextWidth - containerWidth + 20; // Add 20px padding
       teamElement.style.setProperty('--scroll-distance', `-${scrollDistance}px`);
-      teamElement.classList.add('scrolling');
-      console.log('Applied scrolling class to:', titleText);
+      // Use scrolling-upcoming class for upcoming titles, scrolling for others
+      teamElement.classList.add(isUpcoming ? 'scrolling-upcoming' : 'scrolling');
+      console.log('Applied scrolling class to:', titleText, isUpcoming ? '(upcoming)' : '');
     } else {
       console.log('Text fits, no scrolling needed for:', titleText);
     }
-  }, 250); // Increased delay to ensure proper DOM rendering
+  }, delay);
 }
 
 function setupScrollingForUpcomingTitles() {
