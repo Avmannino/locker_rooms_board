@@ -245,24 +245,27 @@ body {
   font-size: inherit;
 }
 
-/* Locker-specific colors - only apply to locker name part */
+/* Locker-specific colors - white text with colored glow effect */
 .locker-flex .locker-name-part,
 .locker-1 .locker-name-part,
 .locker-2 .locker-name-part {
-  color: #ffffff; /* White */
+  color: #ffffff; /* White text - no glow */
 }
 
 .locker-3 .locker-name-part {
-  color: #6F9CE2; /* Blue */
+  color: #ffffff; /* White text */
+  text-shadow: 0 0 8px #6F9CE2, 0 0 12px #6F9CE2, 0 0 16px #6F9CE2; /* Blue glow */
 }
 
 .locker-4 .locker-name-part {
-  color: #F9002E; /* Red */
+  color: #ffffff; /* White text */
+  text-shadow: 0 0 8px #F9002E, 0 0 12px #F9002E, 0 0 16px #F9002E; /* Red glow */
 }
 
 .locker-5 .locker-name-part,
 .locker-6 .locker-name-part {
-  color: #F37B2A; /* Orange */
+  color: #ffffff; /* White text */
+  text-shadow: 0 0 8px #F37B2A, 0 0 12px #F37B2A, 0 0 16px #F37B2A; /* Orange glow */
 }
 
 .team-name {
