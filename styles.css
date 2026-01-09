@@ -454,7 +454,7 @@ body {
 }
 
 .title-description-area .description {
-  font-size: 36px; /* 4px smaller than title */
+  font-size: 34px; /* 4px smaller than title */
   color: var(--muted);
   line-height: 1.4;
   flex: 1;
@@ -1063,7 +1063,7 @@ body {
   }
 
   .title-description-area .description {
-    font-size: 48px; /* 4px smaller than title for TV */
+    font-size: 46px; /* 4px smaller than title for TV */
     line-height: 1.3;
   }
 

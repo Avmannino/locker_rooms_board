@@ -10,13 +10,13 @@ const SHOW_PRESENTED_BY = false;
 
 // Locker branding configuration
 const LOCKER_BRANDING = {
-  '1': { name: 'Away Locker', logo: './assets/locker_generic.png' },
-  '2': { name: 'Away Locker', logo: './assets/locker_generic.png' },
-  '3': { name: 'Stateline Locker Room', logo: './assets/stateline_logo.png' },
-  '4': { name: 'GSC Locker Room', logo: './assets/gsc_logo.png' },
-  '5': { name: 'GCDS Boys Locker Room', logo: './assets/gcds_logo.png' },
-  '6': { name: 'GCDS Girls Locker Room', logo: './assets/gcds_logo.png' },
-  'FLEX': { name: 'FLEX', logo: './assets/locker_generic.png' }
+  '1': { name: 'Away LR', logo: './assets/locker_generic.png' },
+  '2': { name: 'Away LR', logo: './assets/locker_generic.png' },
+  '3': { name: 'Stateline LR', logo: './assets/stateline_logo.png' },
+  '4': { name: 'GSC LR', logo: './assets/gsc_logo.png' },
+  '5': { name: 'GCDS Boys LR', logo: './assets/gcds_logo.png' },
+  '6': { name: 'GCDS Girls LR', logo: './assets/gcds_logo.png' },
+  'FLEX': { name: 'FLEX LR', logo: './assets/locker_generic.png' }
 };
 
 /************************************
@@ -143,11 +143,11 @@ function parseLocker(text) {
     }
     if (current.trim()) entries.push(current.trim());
 
-    // Now extract just the locker entries (number + optional parenthesized team name)
+    // Now extract just the locker entries (number/name + optional parenthesized team name)
     const lockerEntries = [];
     for (const entry of entries) {
-      // Match: number followed by optional space and parenthesized content
-      const match = entry.match(/(\d+(?:\s*\([^)]*(?:\([^)]*\)[^)]*)*\))?)/);
+      // Match: alphanumeric identifier (number or text like FLEX) followed by optional space and parenthesized content
+      const match = entry.match(/([A-Za-z0-9\-]+(?:\s*\([^)]*(?:\([^)]*\)[^)]*)*\))?)/);
       if (match && match[1]) {
         lockerEntries.push(match[1].trim());
       }
