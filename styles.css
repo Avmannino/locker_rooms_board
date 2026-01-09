@@ -1101,7 +1101,7 @@ body {
 
 /* Presented By Section */
 .presented-by {
-  display: flex;
+  display: none !important; /* Hidden wordmark */
   align-items: center;
   gap: 15px;
   justify-content: center;
@@ -1247,6 +1247,14 @@ body {
   
   .print-event {
     width: 55%;
+  }
+  
+  .print-description {
+    display: block;
+    font-size: 9pt;
+    color: #666;
+    font-style: italic;
+    margin-top: 4pt;
   }
   
   .print-rooms {

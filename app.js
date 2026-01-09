@@ -6,7 +6,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBHs9gkU
 const USE_CSV = true;
 
 // Toggle for "Presented By" sponsor section
-const SHOW_PRESENTED_BY = false;
+const SHOW_PRESENTED_BY = true;
 
 // Locker branding configuration
 const LOCKER_BRANDING = {
@@ -934,13 +934,16 @@ async function updatePrintView(onIceList, upNextList, upcomingList) {
       const teamTitle = ev.team || ev.titleRaw;
       const games = teamTitle.split('&&').map(game => game.trim());
       
+      // Get description
+      const matchDescription = parseEventDescription(ev.description);
+      
       if (games.length > 1) {
         // Multi-game display
         const gamesList = games.map(game => `• ${game}`).join('<br>');
-        eventCell.innerHTML = gamesList;
+        eventCell.innerHTML = gamesList + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : '');
       } else {
         // Single game
-        eventCell.textContent = teamTitle;
+        eventCell.innerHTML = teamTitle + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : '');
       }
       
       // Locker rooms column
@@ -1045,13 +1048,16 @@ function updatePrintViewFallback(onIceList, upNextList, upcomingList) {
     const teamTitle = ev.team || ev.titleRaw;
     const games = teamTitle.split('&&').map(game => game.trim());
     
+    // Get description
+    const matchDescription = parseEventDescription(ev.description);
+    
     if (games.length > 1) {
       // Multi-game display
       const gamesList = games.map(game => `• ${game}`).join('<br>');
-      eventCell.innerHTML = gamesList;
+      eventCell.innerHTML = gamesList + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : '');
     } else {
       // Single game
-      eventCell.textContent = teamTitle;
+      eventCell.innerHTML = teamTitle + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : '');
     }
     
     // Locker rooms column
