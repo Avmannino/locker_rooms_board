@@ -1,17 +1,25 @@
 :root {
-  --bg: #0b1b2b;               /* deep navy */
-  --card: #12263a;             /* slightly lighter */
-  --text: #f2f6fb;             /* off-white */
-  --muted: #b8c4d4;            /* soft gray-blue */
-  --accent-now: #3ddc97;       /* green */
-  --accent-next: rgb(255, 137, 137); /* red */
+  --bg: #0b1b2b;
+  /* deep navy */
+  --card: #12263a;
+  /* slightly lighter */
+  --text: #f2f6fb;
+  /* off-white */
+  --muted: #b8c4d4;
+  /* soft gray-blue */
+  --accent-now: #3ddc97;
+  /* green */
+  --accent-next: rgb(255, 137, 137);
+  /* red */
   --danger: #ffffff;
   --rink-a: #4da3ff;
   --rink-b: #3ddc97;
   --rink-c: #f7b500;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html,
 body {
@@ -59,7 +67,7 @@ body {
 }
 
 /* Allow header overflow for PRESENTED BY */
-#app > .app-header {
+#app>.app-header {
   overflow: visible;
 }
 
@@ -100,7 +108,9 @@ body {
   font-weight: 600;
 }
 
-.status { text-align: right; }
+.status {
+  text-align: right;
+}
 
 #clock {
   font-size: 30px;
@@ -119,7 +129,8 @@ body {
    This works together with stage scaling so everything stays visible. */
 .triple-split {
   display: grid;
-  grid-template-rows: 1fr 1fr 1fr;   /* was 280px/280px/280px */
+  grid-template-rows: 1fr 1fr 1fr;
+  /* was 280px/280px/280px */
   gap: 12px;
   padding: 12px 28px 16px;
   flex: 1;
@@ -131,7 +142,8 @@ body {
 
 /* Two-section layout when no teams on ice */
 .triple-split.two-section {
-  grid-template-rows: 1fr 1fr;     /* was 420px 420px */
+  grid-template-rows: 1fr 1fr;
+  /* was 420px 420px */
   gap: 20px;
   padding: 20px 40px 24px;
   grid-template-areas:
@@ -140,23 +152,56 @@ body {
   overflow: hidden;
 }
 
-.triple-split.two-section .panel-on-ice { display: none; }
-.triple-split.two-section .panel-up-next { grid-area: up-next; }
-.triple-split.two-section .panel-upcoming { grid-area: upcoming; }
-.triple-split.two-section .panel { padding: 20px 18px 16px; }
+.triple-split.two-section .panel-on-ice {
+  display: none;
+}
+
+.triple-split.two-section .panel-up-next {
+  grid-area: up-next;
+}
+
+.triple-split.two-section .panel-upcoming {
+  grid-area: upcoming;
+}
+
+.triple-split.two-section .panel {
+  padding: 20px 18px 16px;
+}
 
 .panel {
   background: var(--card);
   border-radius: 16px;
   padding: 0;
+
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
 
-  /* ✅ no scrollbars inside panels */
+  min-height: 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+
   overflow: hidden;
+  /* keep rounded edges clean */
 }
+
+/* ✅ Make the panel content fill the remaining height so nothing gets clipped */
+.panel .list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* no scrollbars */
+}
+
+/* Each event pane should be allowed to fill available space */
+.panel .list .event-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+
 
 .status-row {
   display: flex;
@@ -190,22 +235,25 @@ body {
 .event-pane {
   margin-bottom: 10px;
 }
-.event-pane:last-child { margin-bottom: 0; }
 
-/* ✅ Let the info area flex so it fits within the panel (no overflow) */
+.event-pane:last-child {
+  margin-bottom: 0;
+}
+
 .info-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   padding: 10px 14px;
 
-  /* was min-height:200px; (causes overflow when middle has 3 lockers) */
+  flex: 1 1 auto;
   min-height: 0;
 
-  /* critical: allow this region to shrink inside panel */
-  flex: 1;
-  overflow: hidden;
+  overflow: visible;
+  /* ✅ was hidden — caused locker rows to get cut */
+  align-items: stretch;
 }
+
 
 .title-description-area {
   display: flex;
@@ -248,14 +296,17 @@ body {
   overflow: hidden;
 }
 
-/* Locker List Styling - Adaptive for 0-6 teams */
 .locker-list {
   list-style: none;
   margin: 0;
   padding: 0;
 
-  /* ✅ no scrollbars */
-  overflow: hidden;
+  /* ✅ fill the right column height */
+  flex: 1 1 auto;
+  min-height: 0;
+
+  /* ✅ no scrollbars, but also don’t clip inside this box */
+  overflow: visible;
 
   display: flex;
   flex-direction: column;
@@ -263,6 +314,7 @@ body {
   align-items: flex-end;
   width: 100%;
 }
+
 
 .locker-row {
   display: grid;
@@ -276,7 +328,9 @@ body {
   max-width: 100%;
 }
 
-.locker-row:last-child { border-bottom: none; }
+.locker-row:last-child {
+  border-bottom: none;
+}
 
 .locker-logo,
 .locker-logo-placeholder {
@@ -303,7 +357,10 @@ body {
   color: white;
   justify-self: center;
 }
-.locker-logo-placeholder::before { content: "L"; }
+
+.locker-logo-placeholder::before {
+  content: "L";
+}
 
 .locker-brand {
   font-weight: 700;
@@ -316,7 +373,9 @@ body {
 
 .locker-flex .locker-name-part,
 .locker-1 .locker-name-part,
-.locker-2 .locker-name-part { color: #ffffff; }
+.locker-2 .locker-name-part {
+  color: #ffffff;
+}
 
 .locker-3 .locker-name-part {
   color: #ffffff;
@@ -341,9 +400,16 @@ body {
   padding: 14px 12px;
   gap: 16px;
 }
+
 .locker-list-xl .locker-logo,
-.locker-list-xl .locker-logo-placeholder { width: 52px; height: 52px; }
-.locker-list-xl .locker-brand { min-width: 180px; }
+.locker-list-xl .locker-logo-placeholder {
+  width: 52px;
+  height: 52px;
+}
+
+.locker-list-xl .locker-brand {
+  min-width: 180px;
+}
 
 /* Adaptive sizing: 3-4 lockers (large) */
 .locker-list-large .locker-row {
@@ -352,9 +418,16 @@ body {
   padding: 10px 12px;
   gap: 12px;
 }
+
 .locker-list-large .locker-logo,
-.locker-list-large .locker-logo-placeholder { width: 44px; height: 44px; }
-.locker-list-large .locker-brand { min-width: 160px; }
+.locker-list-large .locker-logo-placeholder {
+  width: 44px;
+  height: 44px;
+}
+
+.locker-list-large .locker-brand {
+  min-width: 160px;
+}
 
 /* Adaptive sizing: 5 lockers (medium) */
 .locker-list-medium .locker-row {
@@ -363,9 +436,16 @@ body {
   padding: 6px 12px;
   gap: 10px;
 }
+
 .locker-list-medium .locker-logo,
-.locker-list-medium .locker-logo-placeholder { width: 36px; height: 36px; }
-.locker-list-medium .locker-brand { min-width: 140px; }
+.locker-list-medium .locker-logo-placeholder {
+  width: 36px;
+  height: 36px;
+}
+
+.locker-list-medium .locker-brand {
+  min-width: 140px;
+}
 
 /* Adaptive sizing: 6 lockers (compact) */
 .locker-list-compact .locker-row {
@@ -374,9 +454,16 @@ body {
   padding: 4px 12px;
   gap: 8px;
 }
+
 .locker-list-compact .locker-logo,
-.locker-list-compact .locker-logo-placeholder { width: 30px; height: 30px; }
-.locker-list-compact .locker-brand { min-width: 120px; }
+.locker-list-compact .locker-logo-placeholder {
+  width: 30px;
+  height: 30px;
+}
+
+.locker-list-compact .locker-brand {
+  min-width: 120px;
+}
 
 .chip {
   display: inline-block;
@@ -428,8 +515,13 @@ body {
 }
 
 /* Default (no ticker): show only first pane */
-#upcomingContainer:not(.ticker) .event-pane { display: none; }
-#upcomingContainer:not(.ticker) .event-pane:first-child { display: block; }
+#upcomingContainer:not(.ticker) .event-pane {
+  display: none;
+}
+
+#upcomingContainer:not(.ticker) .event-pane:first-child {
+  display: block;
+}
 
 /* Ticker mode only when class is present */
 #upcomingContainer.ticker .event-pane {
@@ -441,10 +533,12 @@ body {
   top: 0;
   left: 0;
 }
+
 #upcomingContainer.ticker .event-pane.active {
   opacity: 1;
   transform: translateY(0);
 }
+
 #upcomingContainer.ticker .event-pane.exit {
   opacity: 0;
   transform: translateY(-100%);
@@ -539,6 +633,7 @@ body {
  * PRINT STYLES (unchanged)
  ************************************/
 @media print {
+
   .triple-split,
   .app-header {
     display: none !important;
