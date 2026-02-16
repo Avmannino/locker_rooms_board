@@ -1,41 +1,60 @@
 :root {
-  --bg: #0b1b2b;
-  /* deep navy */
-  --card: #12263a;
-  /* slightly lighter */
-  --text: #f2f6fb;
-  /* off-white */
-  --muted: #b8c4d4;
-  /* soft gray-blue */
-  --accent-now: #3ddc97;
-  /* green */
-  --accent-next: rgb(255, 137, 137);
-  /* red you set */
+  --bg: #0b1b2b;               /* deep navy */
+  --card: #12263a;             /* slightly lighter */
+  --text: #f2f6fb;             /* off-white */
+  --muted: #b8c4d4;            /* soft gray-blue */
+  --accent-now: #3ddc97;       /* green */
+  --accent-next: rgb(255, 137, 137); /* red */
   --danger: #ffffff;
   --rink-a: #4da3ff;
   --rink-b: #3ddc97;
   --rink-c: #f7b500;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html,
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  height: 100%;
+
+  /* ✅ NO SCROLLBARS EVER */
+  overflow: hidden;
 }
 
+/* ✅ NEW: scalable fixed 1920x1080 stage */
+#stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* This is what gets scaled */
+#stageInner {
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+}
+
+/* Your app now fills the 1920x1080 stage */
 #app {
-  height: 100vh;
-  max-height: 1080px;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+
+  /* TV overscan safety (kept) */
+  padding: 0 30px;
+
+  /* ✅ No accidental scrollbars */
   overflow: hidden;
 }
 
@@ -46,7 +65,6 @@ body {
 
 .app-header {
   display: grid;
-  /* 3 columns: left and right columns EXACTLY equal, center gets remaining space */
   grid-template-columns: 300px 1fr 300px;
   gap: 28px;
   padding: 20px 32px;
@@ -55,25 +73,24 @@ body {
   align-items: center;
   height: 180px;
   position: relative;
-  overflow: visible; /* Allow PRESENTED BY to extend below header */
+  overflow: visible;
 }
 
 /* Red pipe between room entries */
 .room-sep {
   color: var(--accent-next);
-  /* your red */
   font-weight: 900;
   line-height: 1;
 }
 
 .title {
-  font-size: 52px; /* Reduced to make room for Presented By */
+  font-size: 52px;
   line-height: 1;
   margin: 0;
   font-weight: 800;
   letter-spacing: 1px;
   text-align: center;
-  margin-bottom: 12px; /* Reduced spacing */
+  margin-bottom: 12px;
 }
 
 .subtitle {
@@ -83,12 +100,10 @@ body {
   font-weight: 600;
 }
 
-.status {
-  text-align: right;
-}
+.status { text-align: right; }
 
 #clock {
-  font-size: 30px; /* Reduced from 32px */
+  font-size: 30px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -99,49 +114,36 @@ body {
   margin-top: 8px;
 }
 
+/* ✅ KEY CHANGE:
+   Use fractional rows instead of fixed pixel rows.
+   This works together with stage scaling so everything stays visible. */
 .triple-split {
   display: grid;
-  grid-template-rows: 280px 280px 280px;
+  grid-template-rows: 1fr 1fr 1fr;   /* was 280px/280px/280px */
   gap: 12px;
   padding: 12px 28px 16px;
   flex: 1;
   min-height: 0;
+
+  /* ✅ Prevent any scrolling inside the main layout */
+  overflow: hidden;
 }
 
 /* Two-section layout when no teams on ice */
 .triple-split.two-section {
-  grid-template-rows: 420px 420px;
+  grid-template-rows: 1fr 1fr;     /* was 420px 420px */
   gap: 20px;
   padding: 20px 40px 24px;
-  grid-template-areas: 
+  grid-template-areas:
     "up-next"
     "upcoming";
+  overflow: hidden;
 }
 
-.triple-split.two-section .panel-on-ice {
-  display: none;
-}
-
-.triple-split.two-section .panel-up-next {
-  grid-area: up-next;
-}
-
-.triple-split.two-section .panel-upcoming {
-  grid-area: upcoming;
-}
-
-.triple-split.two-section .panel {
-  padding: 20px 18px 16px;
-}
-
-.triple-split.two-section .panel-upcoming .list {
-  height: 260px;
-}
-
-.triple-split.two-section .list li {
-  padding: 18px 0;
-  gap: 14px;
-}
+.triple-split.two-section .panel-on-ice { display: none; }
+.triple-split.two-section .panel-up-next { grid-area: up-next; }
+.triple-split.two-section .panel-upcoming { grid-area: upcoming; }
+.triple-split.two-section .panel { padding: 20px 18px 16px; }
 
 .panel {
   background: var(--card);
@@ -151,6 +153,9 @@ body {
   flex-direction: column;
   min-height: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+
+  /* ✅ no scrollbars inside panels */
+  overflow: hidden;
 }
 
 .status-row {
@@ -159,28 +164,103 @@ body {
   padding: 8px 14px;
   border-bottom: 1px solid #23415d;
   gap: 16px;
+  flex: 0 0 auto;
 }
-
-/* Event title is now in the left half of info-split, not in status-row */
 
 .status-row .locker-rooms-chip {
   text-align: center;
-  min-width: 350px; /* Increased for wider area */
-  margin-left: auto; /* Push to the right */
+  min-width: 350px;
+  margin-left: auto;
 }
 
-/* Event title styles are now in .status-row .event-title */
+.locker-rooms-chip {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 2px solid #6366f1;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 40px;
+  font-weight: 800;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
+
+/* Event Pane Styling */
+.event-pane {
+  margin-bottom: 10px;
+}
+.event-pane:last-child { margin-bottom: 0; }
+
+/* ✅ Let the info area flex so it fits within the panel (no overflow) */
+.info-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 10px 14px;
+
+  /* was min-height:200px; (causes overflow when middle has 3 lockers) */
+  min-height: 0;
+
+  /* critical: allow this region to shrink inside panel */
+  flex: 1;
+  overflow: hidden;
+}
+
+.title-description-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.large-title {
+  font-size: 40px;
+  font-weight: 700;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.title-description-area .description {
+  font-size: 34px;
+  color: var(--muted);
+  line-height: 1.4;
+
+  /* ✅ let description shrink instead of forcing overflow */
+  min-height: 0;
+  overflow: hidden;
+}
+
+.locker-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-end;
+
+  /* ✅ no scrollbars */
+  overflow: hidden;
+}
 
 /* Locker List Styling - Adaptive for 0-6 teams */
 .locker-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
+
+  /* ✅ no scrollbars */
+  overflow: hidden;
+
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-end; /* Align locker rows to the right */
+  align-items: flex-end;
   width: 100%;
 }
 
@@ -188,31 +268,21 @@ body {
   display: grid;
   grid-template-columns: 40px 1fr auto;
   align-items: center;
-  justify-items: start; /* Keep content left-aligned within row */
+  justify-items: start;
   gap: 10px;
   padding: 8px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 24px; /* Increased by 2px */
+  font-size: 24px;
   max-width: 100%;
 }
 
-/* Ensure logos are centered in their grid column */
+.locker-row:last-child { border-bottom: none; }
+
 .locker-logo,
 .locker-logo-placeholder {
   justify-self: center;
 }
 
-/* Ensure brand names have consistent alignment */
-.locker-brand {
-  justify-self: start;
-  white-space: nowrap;
-}
-
-.locker-row:last-child {
-  border-bottom: none;
-}
-
-/* Base logo/placeholder sizing */
 .locker-logo {
   width: 36px;
   height: 36px;
@@ -233,152 +303,80 @@ body {
   color: white;
   justify-self: center;
 }
-
-.locker-logo-placeholder::before {
-  content: "L";
-}
+.locker-logo-placeholder::before { content: "L"; }
 
 .locker-brand {
   font-weight: 700;
-  color: var(--text); /* Changed from green to white */
+  color: var(--text);
   min-width: 100px;
   font-size: inherit;
+  justify-self: start;
+  white-space: nowrap;
 }
 
-/* Locker-specific colors - white text with colored glow effect */
 .locker-flex .locker-name-part,
 .locker-1 .locker-name-part,
-.locker-2 .locker-name-part {
-  color: #ffffff; /* White text - no glow */
-}
+.locker-2 .locker-name-part { color: #ffffff; }
 
 .locker-3 .locker-name-part {
-  color: #ffffff; /* White text */
-  text-shadow: 0 0 8px #6F9CE2, 0 0 12px #6F9CE2, 0 0 16px #6F9CE2; /* Blue glow */
+  color: #ffffff;
+  text-shadow: 0 0 8px #6F9CE2, 0 0 12px #6F9CE2, 0 0 16px #6F9CE2;
 }
 
 .locker-4 .locker-name-part {
-  color: #ffffff; /* White text */
-  text-shadow: 0 0 8px #F9002E, 0 0 12px #F9002E, 0 0 16px #F9002E; /* Red glow */
+  color: #ffffff;
+  text-shadow: 0 0 8px #F9002E, 0 0 12px #F9002E, 0 0 16px #F9002E;
 }
 
 .locker-5 .locker-name-part,
 .locker-6 .locker-name-part {
-  color: #ffffff; /* White text */
-  text-shadow: 0 0 8px #F37B2A, 0 0 12px #F37B2A, 0 0 16px #F37B2A; /* Orange glow */
-}
-
-.team-name {
-  font-weight: 600;
-  color: var(--text);
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #ffffff;
+  text-shadow: 0 0 8px #F37B2A, 0 0 12px #F37B2A, 0 0 16px #F37B2A;
 }
 
 /* Adaptive sizing: 1-2 lockers (extra large) */
 .locker-list-xl .locker-row {
   grid-template-columns: 52px 1fr auto;
-  font-size: 30px; /* Increased by 2px */
+  font-size: 30px;
   padding: 14px 12px;
   gap: 16px;
 }
-
 .locker-list-xl .locker-logo,
-.locker-list-xl .locker-logo-placeholder {
-  width: 52px;
-  height: 52px;
-}
-
-.locker-list-xl .locker-brand {
-  min-width: 180px;
-}
+.locker-list-xl .locker-logo-placeholder { width: 52px; height: 52px; }
+.locker-list-xl .locker-brand { min-width: 180px; }
 
 /* Adaptive sizing: 3-4 lockers (large) */
 .locker-list-large .locker-row {
   grid-template-columns: 44px 1fr auto;
-  font-size: 26px; /* Increased by 2px */
+  font-size: 26px;
   padding: 10px 12px;
   gap: 12px;
 }
-
 .locker-list-large .locker-logo,
-.locker-list-large .locker-logo-placeholder {
-  width: 44px;
-  height: 44px;
-}
-
-.locker-list-large .locker-brand {
-  min-width: 160px;
-}
+.locker-list-large .locker-logo-placeholder { width: 44px; height: 44px; }
+.locker-list-large .locker-brand { min-width: 160px; }
 
 /* Adaptive sizing: 5 lockers (medium) */
 .locker-list-medium .locker-row {
   grid-template-columns: 36px 1fr auto;
-  font-size: 22px; /* Increased by 2px */
+  font-size: 22px;
   padding: 6px 12px;
   gap: 10px;
 }
-
 .locker-list-medium .locker-logo,
-.locker-list-medium .locker-logo-placeholder {
-  width: 36px;
-  height: 36px;
-}
-
-.locker-list-medium .locker-brand {
-  min-width: 140px;
-}
+.locker-list-medium .locker-logo-placeholder { width: 36px; height: 36px; }
+.locker-list-medium .locker-brand { min-width: 140px; }
 
 /* Adaptive sizing: 6 lockers (compact) */
 .locker-list-compact .locker-row {
   grid-template-columns: 30px 1fr auto;
-  font-size: 20px; /* Increased by 2px */
+  font-size: 20px;
   padding: 4px 12px;
   gap: 8px;
 }
-
 .locker-list-compact .locker-logo,
-.locker-list-compact .locker-logo-placeholder {
-  width: 30px;
-  height: 30px;
-}
-
-.locker-list-compact .locker-brand {
-  min-width: 120px;
-}
-
-.locker-rooms-chip {
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
-  border: 2px solid #6366f1;
-  border-radius: 999px;
-  padding: 10px 18px;
-  font-size: 40px;
-  font-weight: 800;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  letter-spacing: .4px;
-  white-space: nowrap;
-}
-
-.list {
-  padding: 8px 14px 12px;
-}
-
-
-
-.panel h2 {
-  margin: 0;
-  font-size: 42px;
-  letter-spacing: .3px;
-}
-
-.muted {
-  color: var(--muted);
-  font-weight: 700;
-  font-size: 24px;
-}
+.locker-list-compact .locker-logo-placeholder { width: 30px; height: 30px; }
+.locker-list-compact .locker-brand { min-width: 120px; }
 
 .chip {
   display: inline-block;
@@ -409,99 +407,6 @@ body {
   color: var(--accent-next);
 }
 
-.list {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  overflow: hidden auto;
-  /* scroll if super long */
-}
-
-/* Event Pane Styling */
-.event-pane {
-  margin-bottom: 10px;
-}
-
-.event-pane:last-child {
-  margin-bottom: 0;
-}
-
-/* New split layout for info area */
-.info-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* 50/50 split */
-  gap: 20px;
-  padding: 10px 14px;
-  min-height: 200px;
-}
-
-.title-description-area {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0; /* Allow shrinking */
-  overflow: hidden; /* Prevent overflow from pushing layout */
-}
-
-.large-title {
-  font-size: 40px; /* Decreased by 4px */
-  font-weight: 700;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  color: var(--text);
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: clip; /* For scrolling titles */
-  white-space: nowrap;
-  min-width: 0; /* Allow shrinking */
-  max-width: 100%; /* Constrain to container */
-}
-
-.title-description-area .description {
-  font-size: 34px; /* 4px smaller than title */
-  color: var(--muted);
-  line-height: 1.4;
-  flex: 1;
-}
-
-.locker-area {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-end; /* Align locker listings to the right */
-  overflow-y: auto; /* Handle overflow for many lockers */
-}
-
-/* Legacy info-row styles (kept for compatibility) */
-.info-row {
-  display: flex;
-  align-items: flex-start;
-  padding: 10px 14px;
-  gap: 16px;
-}
-
-.info-row .time-badge {
-  flex-shrink: 0;
-  align-self: flex-start;
-}
-
-.info-row .description {
-  flex: 1;
-  font-size: 18px;
-  color: var(--muted);
-  line-height: 1.4;
-  padding-top: 8px;
-}
-
-.info-row .locker-list {
-  flex-shrink: 0;
-  min-width: 280px;
-  text-align: left; /* Changed from center to left */
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* Changed from center to flex-start for left alignment */
-  justify-content: flex-start;
-}
-
 .time-badge {
   font-size: 36px;
   font-weight: 700;
@@ -509,7 +414,7 @@ body {
   padding: 10px 16px;
   background: #0f2135;
   border: 2px solid #2d4f74;
-  border-radius: 12px; /* Reduced from 999px for less aggressive rounding */
+  border-radius: 12px;
   display: inline-block;
   min-width: 150px;
   text-align: center;
@@ -522,18 +427,9 @@ body {
   height: 100%;
 }
 
-#upcomingContainer.ticker {
-  animation: none; /* Will be controlled by JavaScript */
-}
-
 /* Default (no ticker): show only first pane */
-#upcomingContainer:not(.ticker) .event-pane {
-  display: none;
-}
-
-#upcomingContainer:not(.ticker) .event-pane:first-child {
-  display: block;
-}
+#upcomingContainer:not(.ticker) .event-pane { display: none; }
+#upcomingContainer:not(.ticker) .event-pane:first-child { display: block; }
 
 /* Ticker mode only when class is present */
 #upcomingContainer.ticker .event-pane {
@@ -545,540 +441,16 @@ body {
   top: 0;
   left: 0;
 }
-
 #upcomingContainer.ticker .event-pane.active {
   opacity: 1;
   transform: translateY(0);
 }
-
 #upcomingContainer.ticker .event-pane.exit {
   opacity: 0;
   transform: translateY(-100%);
 }
 
-
-/* Optimized specifically for 1920x1080 displays */
-@media (min-width: 1800px) {
-  .panel-upcoming .list {
-    height: 200px;
-  }
-  
-  .triple-split.two-section .panel-upcoming .list {
-    height: 300px;
-  }
-}
-
-.list li {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 0;
-}
-
-/* Remove separator lines for upcoming events */
-.panel-on-ice .list li,
-.panel-up-next .list li {
-  border-bottom: 1px solid #23415d;
-}
-
-.panel-on-ice .list li:last-child,
-.panel-up-next .list li:last-child {
-  border-bottom: none;
-}
-
-
-.content-row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 16px;
-  align-items: center;
-  margin: 0 14px; /* Match panel header padding for consistent spacing */
-}
-
-/* Multi-game content rows don't need margin since game-rows handle their own spacing */
-.content-row.multi-game {
-  margin: 0;
-  grid-template-columns: auto 1fr; /* Only time and team-container for multi-game */
-  padding-left: 14px; /* Add left spacing for time badge */
-}
-
-/* Center room numbers under "Locker Rooms" header */
-.content-row .room-numbers {
-  justify-self: center;
-}
-
-/* Multi-game layout support */
-.team-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  /* Multi-game containers already inherit margin from content-row */
-}
-
-.game-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 16px;
-  align-items: center;
-  padding: 0 14px; /* Match panel header padding for consistent left AND right spacing */
-}
-
-/* Center room numbers in multi-game layout too */
-.game-row .room-numbers {
-  justify-self: center;
-}
-
-.game-row .team {
-  margin: 0;
-}
-
-.game-row .badge {
-  font-size: 38px;
-}
-
-/* Room numbers styling (no "Room" prefix) - white like time badges */
-.room-numbers {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--text);
-  background: #0f2135;
-  border: 2px solid #2d4f74;
-  border-radius: 8px;
-  padding: 6px 12px;
-  white-space: nowrap;
-  text-align: center;
-  letter-spacing: .3px;
-}
-
-/* Optimize multi-game layout for 3 games */
-.team-container {
-  gap: 2px;
-}
-
-.game-row {
-  gap: 10px;
-  min-height: 28px;
-}
-
-.game-row .team {
-  font-size: 26px;
-  line-height: 1.0;
-  white-space: normal;
-}
-
-.game-row .room-numbers {
-  font-size: 22px;
-  padding: 3px 6px;
-  background: #0f2135;
-  border: 2px solid #2d4f74;
-  color: var(--text);
-}
-
-.team {
-  font-weight: 800;
-  font-size: 36px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-  position: relative;
-  line-height: 1.2;
-}
-
-/* Temporarily hide ellipsis while checking for overflow */
-.team.checking-overflow,
-.large-title.checking-overflow {
-  text-overflow: clip !important;
-}
-
-/* Scrolling title animation for long titles */
-.team.scrolling,
-.team.scrolling-upcoming,
-.large-title.scrolling,
-.large-title.scrolling-upcoming {
-  text-overflow: clip !important; /* Remove ellipsis when scrolling */
-}
-
-.team.scrolling .team-text {
-  display: inline-block;
-  animation: scroll-title 8s linear infinite;
-  animation-delay: 1s; /* Give time to read the beginning */
-}
-
-/* Faster scrolling for upcoming section */
-.team.scrolling-upcoming .team-text {
-  display: inline-block;
-  animation: scroll-title-upcoming 4s linear infinite;
-  animation-delay: 0.5s; /* Shorter delay for faster cycle */
-}
-
-/* Scrolling styles for new large-title */
-.large-title.scrolling .team-text {
-  display: inline-block;
-  animation: scroll-title 8s linear infinite;
-  animation-delay: 1s; /* Give time to read the beginning */
-}
-
-.large-title.scrolling-upcoming .team-text {
-  display: inline-block;
-  animation: scroll-title-upcoming 4s linear infinite;
-  animation-delay: 0.5s; /* Shorter delay for faster cycle */
-}
-
-@keyframes scroll-title {
-  0% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(0); /* Pause at start */
-  }
-  80% {
-    transform: translateX(var(--scroll-distance)); /* Scroll to show end */
-  }
-  100% {
-    transform: translateX(var(--scroll-distance)); /* Pause at end before reset */
-  }
-}
-
-/* Faster scrolling animation for upcoming section to fit within ticker timing */
-@keyframes scroll-title-upcoming {
-  0% {
-    transform: translateX(0);
-  }
-  15% {
-    transform: translateX(0); /* Shorter pause at start */
-  }
-  85% {
-    transform: translateX(var(--scroll-distance)); /* Scroll to show end */
-  }
-  100% {
-    transform: translateX(var(--scroll-distance)); /* Brief pause at end */
-  }
-}
-
-
-.meta {
-  color: var(--muted);
-  font-size: 20px;
-}
-
-.badge {
-  font-size: 32px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 800;
-  letter-spacing: .3px;
-  white-space: nowrap;
-  border: 2px solid #2d4f74;
-  background: #0f2135;
-}
-
-.badge.room {
-  border-color: #4572a1;
-}
-
-.badge.time {
-  border-color: #4a5869;
-  margin-right: 20px;
-}
-
-.badge.warn {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-.empty {
-  margin: 24px;
-  padding: 18px;
-  border: 2px dashed #365c87;
-  border-radius: 12px;
-  color: var(--muted);
-  font-size: 32px;
-  text-align: center;
-}
-
-
-
-/* Optimized specifically for 1920x1080 TV Display */
-@media (min-width: 1800px) {
-  /* Header section */
-  .app-header {
-    padding: 30px 40px;
-    gap: 30px;
-    grid-template-columns: 350px 1fr 350px;
-    height: 180px;
-  }
-
-  .logo img {
-    height: 140px;
-    max-width: 320px;
-  }
-
-  .title {
-    font-size: 64px; /* Reduced for TV to accommodate Presented By */
-    letter-spacing: 1px;
-    margin-bottom: 15px; /* Reduced spacing */
-  }
-
-  .presented-by {
-    bottom: -18px; /* Move 18px below the bottom edge for TV */
-  }
-
-  .presented-by-text {
-    font-size: 20px;
-  }
-
-  .sponsor-logo {
-    height: 45px;
-    max-width: 180px;
-  }
-
-  .sponsor-logo-placeholder {
-    height: 45px;
-    width: 180px;
-    font-size: 14px;
-  }
-
-  #clock {
-    font-size: 30px; /* Consistent 30px for TV too */
-  }
-
-  .updated {
-    font-size: 18px;
-  }
-
-  /* Main content layout */
-  .triple-split {
-    gap: 16px;
-    padding: 16px 32px 20px;
-  }
-
-  .panel h2 {
-    font-size: 52px;
-    letter-spacing: 0.5px;
-  }
-
-  /* Status row - event title and chips */
-  .status-row .event-title {
-    font-size: 40px;
-    margin-left: 20px;
-  }
-
-  /* Time badge and status chips - same size */
-  .time-badge {
-    font-size: 40px;
-    padding: 10px 18px;
-    min-width: 180px;
-  }
-
-  .chip {
-    font-size: 40px;
-    padding: 10px 18px;
-    min-width: 180px;
-  }
-
-  .chip-on-ice,
-  .chip-up-next,
-  .chip-upcoming {
-    font-size: 40px;
-    padding: 10px 18px;
-    min-width: 180px;
-  }
-
-  /* Locker rooms header chip */
-  .locker-rooms-chip {
-    font-size: 40px;
-    padding: 10px 18px;
-    min-width: 300px;
-  }
-
-  /* Locker room list - adaptive sizing for 0-6 teams */
-  .info-row .locker-list {
-    min-width: 300px;
-    align-items: flex-start; /* Ensure left alignment on TV too */
-  }
-
-  .status-row .locker-rooms-chip {
-    min-width: 300px;
-  }
-
-  /* XL: 1-2 lockers */
-  .locker-list-xl .locker-row {
-    grid-template-columns: 60px 1fr auto;
-    font-size: 34px; /* Increased by 2px */
-    padding: 16px 12px;
-    gap: 18px;
-  }
-
-  .locker-list-xl .locker-logo,
-  .locker-list-xl .locker-logo-placeholder {
-    width: 60px;
-    height: 60px;
-  }
-
-  .locker-list-xl .locker-brand {
-    min-width: 200px;
-  }
-
-  /* Large: 3-4 lockers */
-  .locker-list-large .locker-row {
-    grid-template-columns: 50px 1fr auto;
-    font-size: 30px; /* Increased by 2px */
-    padding: 12px 12px;
-    gap: 14px;
-  }
-
-  .locker-list-large .locker-logo,
-  .locker-list-large .locker-logo-placeholder {
-    width: 50px;
-    height: 50px;
-  }
-
-  .locker-list-large .locker-brand {
-    min-width: 180px;
-  }
-
-  /* Medium: 5 lockers */
-  .locker-list-medium .locker-row {
-    grid-template-columns: 42px 1fr auto;
-    font-size: 26px; /* Increased by 2px */
-    padding: 8px 12px;
-    gap: 12px;
-  }
-
-  .locker-list-medium .locker-logo,
-  .locker-list-medium .locker-logo-placeholder {
-    width: 42px;
-    height: 42px;
-  }
-
-  .locker-list-medium .locker-brand {
-    min-width: 160px;
-  }
-
-  /* Compact: 6 lockers */
-  .locker-list-compact .locker-row {
-    grid-template-columns: 34px 1fr auto;
-    font-size: 22px; /* Increased by 2px */
-    padding: 5px 12px;
-    gap: 10px;
-  }
-
-  .locker-list-compact .locker-logo,
-  .locker-list-compact .locker-logo-placeholder {
-    width: 34px;
-    height: 34px;
-  }
-
-  .locker-list-compact .locker-brand {
-    min-width: 140px;
-  }
-
-  /* Info row description */
-  .info-row .description {
-    font-size: 22px;
-  }
-
-  /* Team name styling */
-  .team {
-    font-size: 38px;
-  }
-
-  .team.scrolling .team-text {
-    animation: scroll-title 8s linear infinite;
-    animation-delay: 1s;
-  }
-
-  .team.scrolling-upcoming .team-text {
-    animation: scroll-title-upcoming 4s linear infinite;
-    animation-delay: 0.5s;
-  }
-
-  /* Multi-game layout */
-  .content-row {
-    gap: 20px;
-    margin: 0 20px;
-  }
-
-  .content-row.multi-game {
-    padding-left: 20px;
-  }
-
-  .team-container {
-    gap: 4px;
-  }
-
-  .game-row {
-    gap: 12px;
-    min-height: 32px;
-    padding: 0 20px;
-  }
-
-  .game-row .team {
-    font-size: 30px;
-    line-height: 1.1;
-  }
-
-  .game-row .room-numbers {
-    font-size: 28px;
-    padding: 6px 10px;
-  }
-
-  .room-numbers {
-    font-size: 42px;
-    padding: 10px 16px;
-  }
-
-  /* Misc */
-  .muted {
-    font-size: 26px;
-  }
-
-  .meta {
-    font-size: 22px;
-  }
-
-  .badge {
-    font-size: 42px;
-    padding: 10px 16px;
-  }
-
-  .empty {
-    font-size: 34px;
-    padding: 20px;
-  }
-
-  .list li {
-    padding: 12px 0;
-    gap: 10px;
-  }
-
-  /* New split layout TV optimizations */
-  .info-split {
-    gap: 24px;
-    padding: 12px 16px;
-    min-height: 240px;
-  }
-
-  .large-title {
-    font-size: 52px; /* Decreased by 4px for TV */
-    line-height: 1.1;
-  }
-
-  .title-description-area .description {
-    font-size: 46px; /* 4px smaller than title for TV */
-    line-height: 1.3;
-  }
-
-  .status-row .locker-rooms-chip {
-    min-width: 400px; /* Even larger for TV */
-  }
-
-  .status-row {
-    padding: 12px 16px; /* Increased padding for TV */
-  }
-}
-
+/* Logo + Brand */
 .logo img {
   height: 120px;
   max-width: 260px;
@@ -1101,15 +473,15 @@ body {
 
 /* Presented By Section */
 .presented-by {
-  display: none !important; /* Hidden wordmark */
+  display: none !important;
   align-items: center;
   gap: 15px;
   justify-content: center;
   position: absolute;
-  bottom: -15px; /* Move 15px below the bottom edge */
+  bottom: -15px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10; /* Ensure it appears above other content */
+  z-index: 10;
 }
 
 .presented-by-text {
@@ -1121,7 +493,7 @@ body {
 
 .sponsor-logo {
   height: 40px;
-  max-width: 160px; /* 4:1 aspect ratio: 160px width for 40px height */
+  max-width: 160px;
   width: auto;
   object-fit: contain;
 }
@@ -1153,24 +525,25 @@ body {
   align-items: flex-end;
 }
 
-
-
-/* TV Overscan safety */
-#app {
-  padding: 0 30px;
+.empty {
+  margin: 24px;
+  padding: 18px;
+  border: 2px dashed #365c87;
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 32px;
+  text-align: center;
 }
 
 /************************************
- * PRINT STYLES
+ * PRINT STYLES (unchanged)
  ************************************/
 @media print {
-  /* Hide the normal display */
   .triple-split,
   .app-header {
     display: none !important;
   }
-  
-  /* Reset page styles for print */
+
   #app {
     height: auto !important;
     max-height: none !important;
@@ -1178,47 +551,45 @@ body {
     background: white !important;
     color: black !important;
   }
-  
+
   body {
     background: white !important;
     color: black !important;
     font-size: 12pt !important;
     line-height: 1.4 !important;
     margin: 0.5in !important;
+    overflow: visible !important;
   }
-  
-  /* Show print view */
+
   .print-view {
     display: block !important;
   }
-  
-  /* Print header */
+
   .print-header {
     text-align: center;
     margin-bottom: 20pt;
     border-bottom: 2pt solid black;
     padding-bottom: 10pt;
   }
-  
+
   .print-title {
     font-size: 18pt;
     font-weight: bold;
     margin: 0;
   }
-  
+
   .print-date {
     font-size: 12pt;
     margin: 5pt 0 0 0;
     color: #666;
   }
-  
-  /* Print table */
+
   .print-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15pt;
   }
-  
+
   .print-table th {
     background: #f0f0f0;
     border: 1pt solid black;
@@ -1227,28 +598,28 @@ body {
     font-weight: bold;
     font-size: 11pt;
   }
-  
+
   .print-table td {
     border: 1pt solid black;
     padding: 6pt 8pt;
     font-size: 10pt;
     vertical-align: top;
   }
-  
+
   .print-table tr:nth-child(even) {
     background: #f9f9f9;
   }
-  
+
   .print-time {
     white-space: nowrap;
     font-weight: bold;
     width: 15%;
   }
-  
+
   .print-event {
     width: 55%;
   }
-  
+
   .print-description {
     display: block;
     font-size: 9pt;
@@ -1256,13 +627,12 @@ body {
     font-style: italic;
     margin-top: 4pt;
   }
-  
+
   .print-rooms {
     width: 30%;
     text-align: center;
   }
-  
-  /* Status indicators */
+
   .print-status {
     font-size: 8pt;
     padding: 2pt 4pt;
@@ -1270,41 +640,39 @@ body {
     font-weight: bold;
     text-transform: uppercase;
   }
-  
+
   .print-status.in-progress {
     background: #e8f5e8;
     color: #2d5a2d;
   }
-  
+
   .print-status.up-next {
     background: #fff3cd;
     color: #856404;
   }
-  
+
   .print-status.upcoming {
     background: #f8d7da;
     color: #721c24;
   }
-  
-  /* Page break control */
+
   .print-table {
     page-break-inside: auto;
   }
-  
+
   .print-table tr {
     page-break-inside: avoid;
     page-break-after: auto;
   }
-  
+
   .print-table thead {
     display: table-header-group;
   }
-  
-  /* Date header rows */
+
   .print-date-header {
     background: #e9ecef !important;
   }
-  
+
   .print-date-header td {
     padding: 8pt !important;
     font-size: 11pt !important;
@@ -1313,8 +681,7 @@ body {
     border-top: 2pt solid #333 !important;
     border-bottom: 1pt solid #666 !important;
   }
-  
-  /* Ensure date headers don't break across pages */
+
   .print-date-header {
     page-break-after: avoid;
     page-break-inside: avoid;

@@ -4,74 +4,112 @@
   <meta charset="utf-8" />
   <title>Locker Rooms</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- TV-safe fonts; you can swap to your brand later -->
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body>
-  <div id="app">
-    <header class="app-header">
-      <!-- LEFT: Logo -->
-      <div class="logo">
-        <img src="./assets/logo.png" alt="Wings Arena" />
-      </div>
 
-      <!-- CENTER: Title + Presented By -->
-      <div class="brand">
-        <h1 class="title">SCHEDULE & LOCKER ROOMS</h1>
-        <div class="presented-by" id="presentedBy">
-          <span class="presented-by-text">PRESENTED BY</span>
-          <img src="./assets/presented_by.png" alt="Sponsor" class="sponsor-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-          <div class="sponsor-logo-placeholder" style="display: none;">SPONSOR LOGO</div>
+<body>
+  <!-- ✅ NEW: fixed 1920x1080 stage that scales to fit any screen -->
+  <div id="stage">
+    <div id="stageInner">
+      <div id="app">
+        <header class="app-header">
+          <!-- LEFT: Logo -->
+          <div class="logo">
+            <img src="./assets/logo.png" alt="Wings Arena" />
+          </div>
+
+          <!-- CENTER: Title + Presented By -->
+          <div class="brand">
+            <h1 class="title">SCHEDULE & LOCKER ROOMS</h1>
+            <div class="presented-by" id="presentedBy">
+              <span class="presented-by-text">PRESENTED BY</span>
+              <img
+                src="./assets/presented_by.png"
+                alt="Sponsor"
+                class="sponsor-logo"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+              />
+              <div class="sponsor-logo-placeholder" style="display: none;">SPONSOR LOGO</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Clock + Updated -->
+          <div class="status">
+            <div id="clock" aria-live="polite">--:--</div>
+            <div id="updated" class="updated">Updated: …</div>
+          </div>
+        </header>
+
+        <main class="triple-split">
+          <section class="panel panel-on-ice">
+            <div id="onIceContainer"></div>
+            <div id="onIceEmpty" class="empty" hidden>No Teams On Ice</div>
+          </section>
+
+          <section class="panel panel-up-next">
+            <div id="upNextContainer"></div>
+            <div id="upNextEmpty" class="empty" hidden>No Teams Up Next</div>
+          </section>
+
+          <section class="panel panel-upcoming">
+            <div id="upcomingContainer"></div>
+            <div id="upcomingEmpty" class="empty" hidden>No more teams scheduled today.</div>
+          </section>
+        </main>
+
+        <!-- Print View (hidden on screen, shown when printing) -->
+        <div class="print-view" style="display: none;">
+          <div class="print-header">
+            <h1 class="print-title">Wings Arena - Schedule & Locker Rooms</h1>
+            <div class="print-date" id="printDate">Loading...</div>
+          </div>
+
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th class="print-time">Time</th>
+                <th class="print-event">Event</th>
+                <th class="print-rooms">Locker Rooms</th>
+              </tr>
+            </thead>
+            <tbody id="printTableBody"></tbody>
+          </table>
         </div>
       </div>
-
-      <!-- RIGHT: Clock + Updated -->
-      <div class="status">
-        <div id="clock" aria-live="polite">--:--</div>
-        <div id="updated" class="updated">Updated: …</div>
-      </div>
-    </header>
-
-    <main class="triple-split">
-      <section class="panel panel-on-ice">
-        <div id="onIceContainer"></div>
-        <div id="onIceEmpty" class="empty" hidden>No Teams On Ice</div>
-      </section>
-
-      <section class="panel panel-up-next">
-        <div id="upNextContainer"></div>
-        <div id="upNextEmpty" class="empty" hidden>No Teams Up Next</div>
-      </section>
-
-      <section class="panel panel-upcoming">
-        <div id="upcomingContainer"></div>
-        <div id="upcomingEmpty" class="empty" hidden>No more teams scheduled today.</div>
-      </section>
-    </main>
-
-    <!-- Print View (hidden on screen, shown when printing) -->
-    <div class="print-view" style="display: none;">
-      <div class="print-header">
-        <h1 class="print-title">Wings Arena - Schedule & Locker Rooms</h1>
-        <div class="print-date" id="printDate">Loading...</div>
-      </div>
-      
-      <table class="print-table">
-        <thead>
-          <tr>
-            <th class="print-time">Time</th>
-            <th class="print-event">Event</th>
-            <th class="print-rooms">Locker Rooms</th>
-          </tr>
-        </thead>
-        <tbody id="printTableBody">
-          <!-- Events will be populated by JavaScript -->
-        </tbody>
-      </table>
     </div>
   </div>
+
+  <!-- ✅ NEW: scale-to-fit so ALL content is always visible (no scrollbars) -->
+  <script>
+    (function () {
+      const BASE_W = 1920;
+      const BASE_H = 1080;
+
+      function fitStage() {
+        const inner = document.getElementById("stageInner");
+        if (!inner) return;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Scale down if needed, never scale above 1 (keeps things crisp)
+        const scale = Math.min(vw / BASE_W, vh / BASE_H, 1);
+
+        inner.style.transform = `scale(${scale})`;
+      }
+
+      window.addEventListener("resize", fitStage, { passive: true });
+      window.addEventListener("orientationchange", fitStage, { passive: true });
+      document.addEventListener("DOMContentLoaded", fitStage);
+      fitStage();
+    })();
+  </script>
 
   <script src="./app.js"></script>
 </body>
