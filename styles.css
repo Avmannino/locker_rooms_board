@@ -15,6 +15,9 @@
   --rink-a: #4da3ff;
   --rink-b: #3ddc97;
   --rink-c: #f7b500;
+
+  /* ✅ NEW: global UI scale */
+  --ui-scale: 1.08; /* try 1.06–1.12 */
 }
 
 * {
@@ -67,7 +70,7 @@ body {
 }
 
 /* Allow header overflow for PRESENTED BY */
-#app>.app-header {
+#app > .app-header {
   overflow: visible;
 }
 
@@ -92,7 +95,7 @@ body {
 }
 
 .title {
-  font-size: 52px;
+  font-size: calc(52px * var(--ui-scale));
   line-height: 1;
   margin: 0;
   font-weight: 800;
@@ -104,7 +107,7 @@ body {
 .subtitle {
   margin-top: 6px;
   color: var(--muted);
-  font-size: 24px;
+  font-size: calc(24px * var(--ui-scale));
   font-weight: 600;
 }
 
@@ -113,14 +116,14 @@ body {
 }
 
 #clock {
-  font-size: 30px;
+  font-size: calc(30px * var(--ui-scale));
   font-weight: 800;
   white-space: nowrap;
 }
 
 .updated {
   color: var(--muted);
-  font-size: 20px;
+  font-size: calc(20px * var(--ui-scale));
   margin-top: 8px;
 }
 
@@ -201,8 +204,6 @@ body {
   flex-direction: column;
 }
 
-
-
 .status-row {
   display: flex;
   align-items: center;
@@ -224,10 +225,10 @@ body {
   border: 2px solid #6366f1;
   border-radius: 999px;
   padding: 10px 18px;
-  font-size: 40px;
+  font-size: calc(40px * var(--ui-scale));
   font-weight: 800;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
   white-space: nowrap;
 }
 
@@ -254,7 +255,6 @@ body {
   align-items: stretch;
 }
 
-
 .title-description-area {
   display: flex;
   flex-direction: column;
@@ -264,7 +264,7 @@ body {
 }
 
 .large-title {
-  font-size: 40px;
+  font-size: calc(40px * var(--ui-scale));
   font-weight: 700;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   color: var(--text);
@@ -277,7 +277,7 @@ body {
 }
 
 .title-description-area .description {
-  font-size: 34px;
+  font-size: calc(34px * var(--ui-scale));
   color: var(--muted);
   line-height: 1.4;
 
@@ -315,7 +315,6 @@ body {
   width: 100%;
 }
 
-
 .locker-row {
   display: grid;
   grid-template-columns: 40px 1fr auto;
@@ -324,7 +323,7 @@ body {
   gap: 10px;
   padding: 8px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 24px;
+  font-size: calc(24px * var(--ui-scale));
   max-width: 100%;
 }
 
@@ -396,7 +395,7 @@ body {
 /* Adaptive sizing: 1-2 lockers (extra large) */
 .locker-list-xl .locker-row {
   grid-template-columns: 52px 1fr auto;
-  font-size: 30px;
+  font-size: calc(30px * var(--ui-scale));
   padding: 14px 12px;
   gap: 16px;
 }
@@ -414,7 +413,7 @@ body {
 /* Adaptive sizing: 3-4 lockers (large) */
 .locker-list-large .locker-row {
   grid-template-columns: 44px 1fr auto;
-  font-size: 26px;
+  font-size: calc(26px * var(--ui-scale));
   padding: 10px 12px;
   gap: 12px;
 }
@@ -432,7 +431,7 @@ body {
 /* Adaptive sizing: 5 lockers (medium) */
 .locker-list-medium .locker-row {
   grid-template-columns: 36px 1fr auto;
-  font-size: 22px;
+  font-size: calc(22px * var(--ui-scale));
   padding: 6px 12px;
   gap: 10px;
 }
@@ -450,7 +449,7 @@ body {
 /* Adaptive sizing: 6 lockers (compact) */
 .locker-list-compact .locker-row {
   grid-template-columns: 30px 1fr auto;
-  font-size: 20px;
+  font-size: calc(20px * var(--ui-scale));
   padding: 4px 12px;
   gap: 8px;
 }
@@ -470,14 +469,14 @@ body {
   padding: 10px 16px;
   border-radius: 999px;
   font-weight: 800;
-  letter-spacing: .4px;
-  font-size: 36px;
+  letter-spacing: 0.4px;
+  font-size: calc(36px * var(--ui-scale));
   min-width: 150px;
   text-align: center;
 }
 
 .chip-on-ice {
-  background: rgba(61, 220, 151, .18);
+  background: rgba(61, 220, 151, 0.18);
   border: 2px solid var(--accent-now);
   color: var(--accent-now);
 }
@@ -495,7 +494,7 @@ body {
 }
 
 .time-badge {
-  font-size: 36px;
+  font-size: calc(36px * var(--ui-scale));
   font-weight: 700;
   color: #ffffff;
   padding: 10px 16px;
@@ -550,7 +549,7 @@ body {
   max-width: 260px;
   width: auto;
   display: block;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .3));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
   object-fit: contain;
   object-position: center;
 }
@@ -579,7 +578,7 @@ body {
 }
 
 .presented-by-text {
-  font-size: 18px;
+  font-size: calc(18px * var(--ui-scale));
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 1px;
@@ -625,7 +624,7 @@ body {
   border: 2px dashed #365c87;
   border-radius: 12px;
   color: var(--muted);
-  font-size: 32px;
+  font-size: calc(32px * var(--ui-scale));
   text-align: center;
 }
 
@@ -633,7 +632,6 @@ body {
  * PRINT STYLES (unchanged)
  ************************************/
 @media print {
-
   .triple-split,
   .app-header {
     display: none !important;
