@@ -728,7 +728,16 @@ async function updatePrintView(onIceList, upNextList, upcomingList) {
     const now = new Date();
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
 
-    const next5DaysEvents = allEvents.filter((ev) => ev.start >= now && ev.start <= fiveDaysFromNow);
+    // Use facility-timezone date strings so we include all of today + next 5 days (not just "from now")
+    const dateOpts = { timeZone: FACILITY_TIMEZONE };
+    const fmtDate = (d) => new Intl.DateTimeFormat("en-CA", { ...dateOpts, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+    const todayStr = fmtDate(now);
+    const endStr = fmtDate(fiveDaysFromNow);
+
+    const next5DaysEvents = allEvents.filter((ev) => {
+      const evDateStr = fmtDate(ev.start);
+      return evDateStr >= todayStr && evDateStr <= endStr;
+    });
     next5DaysEvents.sort((a, b) => a.start - b.start);
 
     const printDate = document.getElementById("printDate");
@@ -745,74 +754,93 @@ async function updatePrintView(onIceList, upNextList, upcomingList) {
     }).format(fiveDaysFromNow);
     printDate.textContent = `${startDateStr} - ${endDateStr} (Next 5 Days)`;
 
-    const tbody = document.getElementById("printTableBody");
-    tbody.innerHTML = "";
+    const dateOptsFmt = { timeZone: FACILITY_TIMEZONE, weekday: "long", month: "long", day: "numeric" };
+    const eventDateStr = (ev) => new Intl.DateTimeFormat("en-US", { ...dateOptsFmt }).format(new Date(ev.start));
 
-    let currentDate = null;
+    // Group events by calendar day (one page per day)
+    const eventsByDay = new Map();
+    for (const ev of next5DaysEvents) {
+      const key = fmtDate(ev.start);
+      if (!eventsByDay.has(key)) eventsByDay.set(key, []);
+      eventsByDay.get(key).push(ev);
+    }
 
-    next5DaysEvents.forEach((ev) => {
-      const eventDate = new Date(ev.start);
-      const eventDateStr = new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        timeZone: FACILITY_TIMEZONE,
-      }).format(eventDate);
+    const dayKeys = Array.from(eventsByDay.keys()).sort();
+    const container = document.getElementById("printDayBlocks");
+    container.innerHTML = "";
 
-      if (eventDateStr !== currentDate) {
-        currentDate = eventDateStr;
+    dayKeys.forEach((dayKey, index) => {
+      const dayEvents = eventsByDay.get(dayKey);
 
-        const dateRow = document.createElement("tr");
-        dateRow.className = "print-date-header";
-        const dateCell = document.createElement("td");
-        dateCell.colSpan = 3;
-        dateCell.innerHTML = `<strong>${eventDateStr}</strong>`;
-        dateRow.appendChild(dateCell);
-        tbody.appendChild(dateRow);
-      }
+      const block = document.createElement("div");
+      block.className = "print-day-block";
 
-      const row = document.createElement("tr");
+      const firstEv = dayEvents[0];
+      const dayTitleStr = new Intl.DateTimeFormat("en-US", { ...dateOptsFmt }).format(new Date(firstEv.start));
 
-      const timeCell = document.createElement("td");
-      timeCell.className = "print-time";
-      timeCell.textContent = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
+      const titleEl = document.createElement("div");
+      titleEl.className = "print-day-title";
+      titleEl.textContent = dayTitleStr;
+      block.appendChild(titleEl);
 
-      const eventCell = document.createElement("td");
-      eventCell.className = "print-event";
+      const table = document.createElement("table");
+      table.className = "print-table";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th class="print-time">Time</th>
+            <th class="print-event">Event</th>
+            <th class="print-rooms">Locker Rooms</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector("tbody");
 
-      const teamTitle = ev.team || ev.titleRaw;
-      const games = teamTitle.split("&&").map((g) => g.trim());
-      const matchDescription = parseEventDescription(ev.description);
+      dayEvents.forEach((ev) => {
+        const row = document.createElement("tr");
 
-      if (games.length > 1) {
-        const gamesList = games.map((g) => `• ${g}`).join("<br>");
-        eventCell.innerHTML =
-          gamesList + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
-      } else {
-        eventCell.innerHTML =
-          teamTitle + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
-      }
+        const timeCell = document.createElement("td");
+        timeCell.className = "print-time";
+        timeCell.textContent = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
 
-      const roomsCell = document.createElement("td");
-      roomsCell.className = "print-rooms";
+        const eventCell = document.createElement("td");
+        eventCell.className = "print-event";
+        const teamTitle = ev.team || ev.titleRaw;
+        const games = teamTitle.split("&&").map((g) => g.trim());
+        const matchDescription = parseEventDescription(ev.description);
+        if (games.length > 1) {
+          const gamesList = games.map((g) => `• ${g}`).join("<br>");
+          eventCell.innerHTML =
+            gamesList + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
+        } else {
+          eventCell.innerHTML =
+            teamTitle + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
+        }
 
-      if (games.length > 1) {
-        const lockerParts = (ev.rawLocker || ev.locker || "").split("&&").map((l) => l.trim());
-        const roomsList = games
-          .map((_, index) => {
-            const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
-            return parseLocker(rawGameLocker) || rawGameLocker || "—";
-          })
-          .join("<br>");
-        roomsCell.innerHTML = roomsList;
-      } else {
-        roomsCell.textContent = ev.locker || "—";
-      }
+        const roomsCell = document.createElement("td");
+        roomsCell.className = "print-rooms";
+        if (games.length > 1) {
+          const lockerParts = (ev.rawLocker || ev.locker || "").split("&&").map((l) => l.trim());
+          const roomsList = games
+            .map((_, i) => {
+              const rawGameLocker = lockerParts[i] || ev.rawLocker || ev.locker || "—";
+              return parseLocker(rawGameLocker) || rawGameLocker || "—";
+            })
+            .join("<br>");
+          roomsCell.innerHTML = roomsList;
+        } else {
+          roomsCell.textContent = ev.locker || "—";
+        }
 
-      row.appendChild(timeCell);
-      row.appendChild(eventCell);
-      row.appendChild(roomsCell);
-      tbody.appendChild(row);
+        row.appendChild(timeCell);
+        row.appendChild(eventCell);
+        row.appendChild(roomsCell);
+        tbody.appendChild(row);
+      });
+
+      block.appendChild(table);
+      container.appendChild(block);
     });
   } catch (err) {
     console.error("Failed to load events for print view:", err);
@@ -840,53 +868,62 @@ function updatePrintViewFallback(onIceList, upNextList, upcomingList) {
   }).format(now);
   printDate.textContent = `${dateStr} - Remaining Events (Fallback)`;
 
-  const tbody = document.getElementById("printTableBody");
-  tbody.innerHTML = "";
+  const dateOptsFmt = { timeZone: FACILITY_TIMEZONE, weekday: "long", month: "long", day: "numeric" };
+  const fmtDateKey = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: FACILITY_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  const eventsByDay = new Map();
+  for (const ev of allEvents) {
+    const key = fmtDateKey(new Date(ev.start));
+    if (!eventsByDay.has(key)) eventsByDay.set(key, []);
+    eventsByDay.get(key).push(ev);
+  }
+  const dayKeys = Array.from(eventsByDay.keys()).sort();
+  const container = document.getElementById("printDayBlocks");
+  container.innerHTML = "";
 
-  allEvents.forEach((ev) => {
-    const row = document.createElement("tr");
+  dayKeys.forEach((dayKey, index) => {
+    const dayEvents = eventsByDay.get(dayKey);
+    const isLastDay = index === dayKeys.length - 1;
+    const block = document.createElement("div");
+    block.className = "print-day-block";
+    if (!isLastDay) block.style.pageBreakAfter = "always";
 
-    const timeCell = document.createElement("td");
-    timeCell.className = "print-time";
-    const timeRange = fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE);
-    timeCell.innerHTML = `${timeRange}<br><span class="print-status ${ev.status}">${ev.statusLabel}</span>`;
+    const dayTitleStr = new Intl.DateTimeFormat("en-US", { ...dateOptsFmt }).format(new Date(dayEvents[0].start));
+    const titleEl = document.createElement("div");
+    titleEl.className = "print-day-title";
+    titleEl.textContent = dayTitleStr;
+    block.appendChild(titleEl);
 
-    const eventCell = document.createElement("td");
-    eventCell.className = "print-event";
+    const table = document.createElement("table");
+    table.className = "print-table";
+    table.innerHTML = `<thead><tr><th class="print-time">Time</th><th class="print-event">Event</th><th class="print-rooms">Locker Rooms</th></tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector("tbody");
 
-    const teamTitle = ev.team || ev.titleRaw;
-    const games = teamTitle.split("&&").map((g) => g.trim());
-    const matchDescription = parseEventDescription(ev.description);
-
-    if (games.length > 1) {
-      const gamesList = games.map((g) => `• ${g}`).join("<br>");
-      eventCell.innerHTML =
-        gamesList + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
-    } else {
-      eventCell.innerHTML =
-        teamTitle + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
-    }
-
-    const roomsCell = document.createElement("td");
-    roomsCell.className = "print-rooms";
-
-    if (games.length > 1) {
-      const lockerParts = (ev.rawLocker || ev.locker || "").split("&&").map((l) => l.trim());
-      const roomsList = games
-        .map((_, index) => {
-          const rawGameLocker = lockerParts[index] || ev.rawLocker || ev.locker || "—";
-          return parseLocker(rawGameLocker) || rawGameLocker || "—";
-        })
-        .join("<br>");
-      roomsCell.innerHTML = roomsList;
-    } else {
-      roomsCell.textContent = ev.locker || "—";
-    }
-
-    row.appendChild(timeCell);
-    row.appendChild(eventCell);
-    row.appendChild(roomsCell);
-    tbody.appendChild(row);
+    dayEvents.forEach((ev) => {
+      const row = document.createElement("tr");
+      const timeCell = document.createElement("td");
+      timeCell.className = "print-time";
+      timeCell.innerHTML = `${fmtTimeRange(ev.startISO, ev.endISO, FACILITY_TIMEZONE)}<br><span class="print-status ${ev.status}">${ev.statusLabel}</span>`;
+      const eventCell = document.createElement("td");
+      eventCell.className = "print-event";
+      const teamTitle = ev.team || ev.titleRaw;
+      const games = teamTitle.split("&&").map((g) => g.trim());
+      const matchDescription = parseEventDescription(ev.description);
+      eventCell.innerHTML = (games.length > 1 ? games.map((g) => `• ${g}`).join("<br>") : teamTitle) + (matchDescription ? `<br><span class="print-description">${matchDescription}</span>` : "");
+      const roomsCell = document.createElement("td");
+      roomsCell.className = "print-rooms";
+      if (games.length > 1) {
+        const lockerParts = (ev.rawLocker || ev.locker || "").split("&&").map((l) => l.trim());
+        roomsCell.innerHTML = games.map((_, i) => parseLocker(lockerParts[i] || ev.rawLocker || ev.locker || "—") || lockerParts[i] || ev.locker || "—").join("<br>");
+      } else {
+        roomsCell.textContent = ev.locker || "—";
+      }
+      row.appendChild(timeCell);
+      row.appendChild(eventCell);
+      row.appendChild(roomsCell);
+      tbody.appendChild(row);
+    });
+    block.appendChild(table);
+    container.appendChild(block);
   });
 }
 

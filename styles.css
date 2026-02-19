@@ -632,17 +632,9 @@ body {
  * PRINT STYLES (unchanged)
  ************************************/
 @media print {
-  .triple-split,
-  .app-header {
+  /* Hide the on-screen stage entirely so it doesn't affect print layout */
+  #stage {
     display: none !important;
-  }
-
-  #app {
-    height: auto !important;
-    max-height: none !important;
-    padding: 0 !important;
-    background: white !important;
-    color: black !important;
   }
 
   body {
@@ -654,15 +646,46 @@ body {
     overflow: visible !important;
   }
 
+  /* Print view is the only visible content (sibling of #stage, not inside it) */
   .print-view {
     display: block !important;
+    visibility: visible !important;
   }
 
   .print-header {
     text-align: center;
-    margin-bottom: 20pt;
-    border-bottom: 2pt solid black;
     padding-bottom: 10pt;
+    border-bottom: 2pt solid black;
+    margin-bottom: 12pt;
+    background: white;
+  }
+
+  /* One day per page: force a new page after each day block */
+  .print-day-block {
+    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-day-block:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-day-title {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 0 0 6pt 0;
+    padding-bottom: 4pt;
+    border-bottom: 1pt solid #333;
+  }
+
+  .print-table {
+    margin-top: 0;
+  }
+
+  .print-day-block .print-table {
+    margin-top: 8pt;
   }
 
   .print-title {
@@ -680,7 +703,6 @@ body {
   .print-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15pt;
   }
 
   .print-table th {
@@ -777,6 +799,7 @@ body {
 
   .print-date-header {
     page-break-after: avoid;
+    page-break-before: avoid;
     page-break-inside: avoid;
   }
 }

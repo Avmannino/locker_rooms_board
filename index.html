@@ -63,26 +63,17 @@
           </section>
         </main>
 
-        <!-- Print View (hidden on screen, shown when printing) -->
-        <div class="print-view" style="display: none;">
-          <div class="print-header">
-            <h1 class="print-title">Wings Arena - Schedule & Locker Rooms</h1>
-            <div class="print-date" id="printDate">Loading...</div>
-          </div>
-
-          <table class="print-table">
-            <thead>
-              <tr>
-                <th class="print-time">Time</th>
-                <th class="print-event">Event</th>
-                <th class="print-rooms">Locker Rooms</th>
-              </tr>
-            </thead>
-            <tbody id="printTableBody"></tbody>
-          </table>
-        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Print View: outside stage so print layout is not affected by scale/transform -->
+  <div class="print-view" id="printViewRoot" style="display: none;">
+    <div class="print-header">
+      <h1 class="print-title">Wings Arena - Schedule & Locker Rooms</h1>
+      <div class="print-date" id="printDate">Loading...</div>
+    </div>
+    <div id="printDayBlocks"></div>
   </div>
 
   <!-- ✅ NEW: scale-to-fit so ALL content is always visible (no scrollbars) -->
