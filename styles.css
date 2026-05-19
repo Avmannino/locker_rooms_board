@@ -362,12 +362,22 @@ body {
 }
 
 .locker-brand {
-  font-weight: 700;
+  font-weight: 300;
   color: var(--text);
   min-width: 100px;
   font-size: inherit;
   justify-self: start;
   white-space: nowrap;
+}
+
+.locker-num {
+  font-weight: 900;
+}
+
+.locker-hash {
+  font-weight: 100;
+  font-size: 0.65em;
+  vertical-align: middle;
 }
 
 .locker-flex .locker-name-part,
@@ -378,12 +388,12 @@ body {
 
 .locker-3 .locker-name-part {
   color: #ffffff;
-  text-shadow: 0 0 8px #6F9CE2, 0 0 12px #6F9CE2, 0 0 16px #6F9CE2;
+  text-shadow: 0 0 4px #6F9CE2, 0 0 8px #6F9CE2;
 }
 
 .locker-4 .locker-name-part {
   color: #ffffff;
-  text-shadow: 0 0 8px #F9002E, 0 0 12px #F9002E, 0 0 16px #F9002E;
+  text-shadow: 0 0 4px #F9002E, 0 0 8px #F9002E;
 }
 
 .locker-5 .locker-name-part,

@@ -15,13 +15,13 @@ const SHOW_PRESENTED_BY = true;
 
 // Locker branding configuration
 const LOCKER_BRANDING = {
-  "1": { name: "Away LR", logo: "./assets/locker_generic.png" },
-  "2": { name: "Away LR", logo: "./assets/locker_generic.png" },
-  "3": { name: "Stateline LR", logo: "./assets/stateline_logo.png" },
-  "4": { name: "GSC LR", logo: "./assets/gsc_logo.png" },
-  "5": { name: "GCDS Boys LR", logo: "./assets/gcds_logo.png" },
-  "6": { name: "GCDS Girls LR", logo: "./assets/gcds_logo.png" },
-  FLEX: { name: "FLEX LR", logo: "./assets/locker_generic.png" },
+  "1": { name: "Away Locker", logo: "./assets/locker_generic.png" },
+  "2": { name: "Away Locker", logo: "./assets/locker_generic.png" },
+  "3": { name: "Stateline Locker", logo: "./assets/stateline_logo.png" },
+  "4": { name: "GSC Locker", logo: "./assets/gsc_logo.png" },
+  "5": { name: "GCDS Boys Locker", logo: "./assets/gcds_logo.png" },
+  "6": { name: "GCDS Girls Locker", logo: "./assets/gcds_logo.png" },
+  FLEX: { name: "FLEX Locker", logo: "./assets/locker_generic.png" },
 };
 
 /************************************
@@ -622,7 +622,7 @@ function startTickerForEventPanes() {
       next.classList.add("active");
       currentTickerIndex = nextIndex;
     }, 400);
-  }, 7000);
+  }, 5000);
 }
 
 function startTicker() {
@@ -943,7 +943,7 @@ function renderBrandedLockerRoom(lockerNumber, teamName) {
     lockerRow.innerHTML = `
       <div class="locker-logo-placeholder"></div>
       <span class="locker-brand locker-${lockerNumber}">
-        <span class="locker-name-part">Locker ${lockerNumber}</span>${teamName ? ": " + teamName : ""}
+        <span class="locker-name-part">Locker <span class="locker-num"><span class="locker-hash">#</span>${lockerNumber}</span></span>${teamName ? ": " + teamName : ""}
       </span>
       <span></span>
     `;
@@ -957,7 +957,7 @@ function renderBrandedLockerRoom(lockerNumber, teamName) {
          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
     <div class="locker-logo-placeholder" style="display:none;"></div>
     <span class="locker-brand locker-${lockerNumber}">
-      <span class="locker-name-part">${branding.name} (${lockerNumber})</span>${teamName ? ": " + teamName : ""}
+      <span class="locker-name-part">${branding.name} <span class="locker-num">(<span class="locker-hash">#</span>${lockerNumber})</span></span>${teamName ? ": " + teamName : ""}
     </span>
     <span></span>
   `;
