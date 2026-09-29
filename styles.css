@@ -243,7 +243,8 @@ body {
 
 .info-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Title takes all remaining width; locker column only as wide as its rows */
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 20px;
   padding: 10px 14px;
 
@@ -274,6 +275,29 @@ body {
   white-space: nowrap;
   min-width: 0;
   max-width: 100%;
+}
+
+/* Carousel long titles: set up in setupScrollingTitle() when text overflows */
+.large-title .team-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.large-title.scrolling .team-text,
+.large-title.scrolling-upcoming .team-text {
+  animation: title-carousel var(--scroll-duration, 10s) ease-in-out infinite;
+}
+
+@keyframes title-carousel {
+  /* Hold, slide to the end, hold, then the loop restart snaps back to the start */
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+  80%,
+  100% {
+    transform: translateX(var(--scroll-distance, 0));
+  }
 }
 
 .title-description-area .description {

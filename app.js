@@ -685,36 +685,29 @@ function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
   teamElement.appendChild(textSpan);
 
   const delay = isUpcoming ? 500 : 250;
+  const SCROLL_PX_PER_SEC = 80;
 
-  setTimeout(() => {
-    teamElement.offsetHeight;
+  // Wait for web fonts so measurements match the rendered text width
+  document.fonts.ready.then(() => {
+    setTimeout(() => {
+      const containerWidth = teamElement.clientWidth;
+      const textWidth = textSpan.scrollWidth;
 
-    const containerWidth = teamElement.offsetWidth;
-    const textWidth = textSpan.scrollWidth;
+      teamElement.classList.remove("checking-overflow");
 
-    let actualTextWidth = textWidth;
-    if (textWidth === 0) {
-      const tempSpan = document.createElement("span");
-      tempSpan.style.visibility = "hidden";
-      tempSpan.style.position = "absolute";
-      tempSpan.style.whiteSpace = "nowrap";
-      tempSpan.style.fontSize = window.getComputedStyle(teamElement).fontSize;
-      tempSpan.style.fontFamily = window.getComputedStyle(teamElement).fontFamily;
-      tempSpan.style.fontWeight = window.getComputedStyle(teamElement).fontWeight;
-      tempSpan.textContent = titleText;
-      document.body.appendChild(tempSpan);
-      actualTextWidth = tempSpan.offsetWidth;
-      document.body.removeChild(tempSpan);
-    }
+      // Hidden panes measure 0 — nothing to scroll
+      if (!containerWidth || textWidth <= containerWidth) return;
 
-    teamElement.classList.remove("checking-overflow");
+      // Pause, slide left to reveal the end, pause, snap back (see @keyframes title-carousel)
+      const scrollDistance = textWidth - containerWidth + 20;
+      const slideSeconds = scrollDistance / SCROLL_PX_PER_SEC;
+      const totalSeconds = Math.max(8, slideSeconds / 0.6); // slide = 60% of the cycle
 
-    if (actualTextWidth > containerWidth) {
-      const scrollDistance = actualTextWidth - containerWidth + 20;
       teamElement.style.setProperty("--scroll-distance", `-${scrollDistance}px`);
+      teamElement.style.setProperty("--scroll-duration", `${totalSeconds}s`);
       teamElement.classList.add(isUpcoming ? "scrolling-upcoming" : "scrolling");
-    }
-  }, delay);
+    }, delay);
+  });
 }
 
 /************************************
