@@ -467,6 +467,51 @@ function createLockerRows(ev, context) {
   return lockerRows;
 }
 
+// Largest → smallest; see "Adaptive sizing" in styles.css
+const LOCKER_DENSITIES = ["locker-list-xl", "locker-list-large", "locker-list-medium", "locker-list-compact"];
+
+// Extra room (stage px) the last row needs below it, so glow/descenders aren't clipped
+const LOCKER_FIT_MARGIN = 8;
+
+// Some TV browsers lack document.fonts
+function fontsReady() {
+  return document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+}
+
+// How far (stage px) the last locker row extends past the visible locker area; <= 0 means it fits
+function lockerOverflow(lockerList) {
+  const lockerArea = lockerList.parentElement;
+  const areaRect = lockerArea.getBoundingClientRect();
+  const lastRect = lockerList.lastElementChild.getBoundingClientRect();
+  // Rects are in screen px after #stageInner scaling; convert back to stage px
+  const scale = areaRect.height / lockerArea.clientHeight || 1;
+  return (lastRect.bottom - areaRect.bottom) / scale + LOCKER_FIT_MARGIN;
+}
+
+// Shrink locker rows until they fit the pane's height; if even compact overflows, scroll them vertically
+function fitLockerList(lockerList, densityIndex) {
+  // Hidden panes measure 0 — nothing to fit
+  if (!lockerList.parentElement.clientHeight || !lockerList.lastElementChild) return;
+
+  while (lockerOverflow(lockerList) > 0 && densityIndex < LOCKER_DENSITIES.length - 1) {
+    lockerList.classList.remove(LOCKER_DENSITIES[densityIndex]);
+    densityIndex++;
+    lockerList.classList.add(LOCKER_DENSITIES[densityIndex]);
+  }
+
+  const overflow = lockerOverflow(lockerList);
+  if (overflow <= 0) return;
+
+  // Pause, slide up to reveal the last rows, pause, snap back (see @keyframes locker-carousel)
+  const SCROLL_PX_PER_SEC = 30;
+  const scrollDistance = overflow;
+  const totalSeconds = Math.max(8, scrollDistance / SCROLL_PX_PER_SEC / 0.6); // slide = 60% of the cycle
+
+  lockerList.style.setProperty("--scroll-distance", `-${scrollDistance}px`);
+  lockerList.style.setProperty("--scroll-duration", `${totalSeconds}s`);
+  lockerList.classList.add("locker-list-scrolling");
+}
+
 function createEventPane(ev, context, chipClass, chipText) {
   const eventPane = document.createElement("div");
   eventPane.className = "event-pane";
@@ -498,12 +543,20 @@ function createEventPane(ev, context, chipClass, chipText) {
   const lockerRows = createLockerRows(ev, context);
   lockerRows.forEach((row) => lockerList.appendChild(row));
 
-  // Adaptive sizing based on number of lockers
+  // Adaptive sizing based on number of lockers; fitLockerList() steps down further if they don't fit
   const numLockers = lockerRows.length;
-  if (numLockers <= 2) lockerList.classList.add("locker-list-xl");
-  else if (numLockers <= 4) lockerList.classList.add("locker-list-large");
-  else if (numLockers === 5) lockerList.classList.add("locker-list-medium");
-  else lockerList.classList.add("locker-list-compact");
+  let densityIndex;
+  if (numLockers <= 2) densityIndex = 0;
+  else if (numLockers <= 4) densityIndex = 1;
+  else if (numLockers === 5) densityIndex = 2;
+  else densityIndex = 3;
+  lockerList.classList.add(LOCKER_DENSITIES[densityIndex]);
+
+  if (numLockers) {
+    fontsReady().then(() => {
+      setTimeout(() => fitLockerList(lockerList, densityIndex), 250);
+    });
+  }
 
   // Scrolling titles
   const largeTitleElement = eventPane.querySelector(".large-title");
@@ -688,7 +741,7 @@ function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
   const SCROLL_PX_PER_SEC = 80;
 
   // Wait for web fonts so measurements match the rendered text width
-  document.fonts.ready.then(() => {
+  fontsReady().then(() => {
     setTimeout(() => {
       const containerWidth = teamElement.clientWidth;
       const textWidth = textSpan.scrollWidth;
@@ -943,6 +996,12 @@ function renderBrandedLockerRoom(lockerNumber, teamName) {
     return lockerRow;
   }
 
+  // FLEX has no room number, so skip the "(#N)" suffix
+  const numberSuffix =
+    lockerNumber === "FLEX"
+      ? ""
+      : ` <span class="locker-num">(<span class="locker-hash">#</span>${lockerNumber})</span>`;
+
   const lockerRow = document.createElement("li");
   lockerRow.className = "locker-row";
   lockerRow.innerHTML = `
@@ -950,7 +1009,7 @@ function renderBrandedLockerRoom(lockerNumber, teamName) {
          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
     <div class="locker-logo-placeholder" style="display:none;"></div>
     <span class="locker-brand locker-${lockerNumber}">
-      <span class="locker-name-part">${branding.name} <span class="locker-num">(<span class="locker-hash">#</span>${lockerNumber})</span></span>${teamName ? ": " + teamName : ""}
+      <span class="locker-name-part">${branding.name}${numberSuffix}</span>${teamName ? ": " + teamName : ""}
     </span>
     <span></span>
   `;

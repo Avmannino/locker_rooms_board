@@ -204,6 +204,24 @@ body {
   flex-direction: column;
 }
 
+/* Bound panes to the panel height so fitLockerList() can measure locker overflow */
+#onIceContainer,
+#upNextContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#onIceContainer .event-pane,
+#upNextContainer .event-pane,
+#upcomingContainer .event-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .status-row {
   display: flex;
   align-items: center;
@@ -245,6 +263,8 @@ body {
   display: grid;
   /* Title takes all remaining width; locker column only as wide as its rows */
   grid-template-columns: minmax(0, 1fr) auto;
+  /* Row fills the pane instead of growing past it */
+  grid-template-rows: minmax(0, 1fr);
   gap: 20px;
   padding: 10px 14px;
 
@@ -337,6 +357,24 @@ body {
   justify-content: flex-start;
   align-items: flex-end;
   width: 100%;
+}
+
+/* Last resort when even compact rows don't fit: set up in fitLockerList() */
+.locker-list.locker-list-scrolling {
+  flex: 0 0 auto;
+  animation: locker-carousel var(--scroll-duration, 10s) ease-in-out infinite;
+}
+
+@keyframes locker-carousel {
+  /* Hold, slide up to the last rows, hold, then the loop restart snaps back to the top */
+  0%,
+  20% {
+    transform: translateY(0);
+  }
+  80%,
+  100% {
+    transform: translateY(var(--scroll-distance, 0));
+  }
 }
 
 .locker-row {
@@ -553,13 +591,15 @@ body {
 }
 
 #upcomingContainer:not(.ticker) .event-pane:first-child {
-  display: block;
+  display: flex;
+  height: 100%;
 }
 
 /* Ticker mode only when class is present */
 #upcomingContainer.ticker .event-pane {
   position: absolute;
   width: 100%;
+  height: 100%;
   opacity: 0;
   transform: translateY(100%);
   transition: all 0.8s ease-in-out;
