@@ -646,7 +646,7 @@ function startTickerForEventPanes() {
 
   if (tickerItems.length <= 1) {
     if (tickerInterval) {
-      clearInterval(tickerInterval);
+      clearTimeout(tickerInterval);
       tickerInterval = null;
     }
     return;
@@ -654,28 +654,61 @@ function startTickerForEventPanes() {
 
   container.classList.add("ticker");
 
-  if (tickerInterval) clearInterval(tickerInterval);
+  if (tickerInterval) clearTimeout(tickerInterval);
 
   tickerItems.forEach((item) => item.classList.remove("active", "exit"));
   tickerItems[0].classList.add("active");
   currentTickerIndex = 0;
 
-  tickerInterval = setInterval(() => {
-    if (tickerItems.length <= 1) return;
+  scheduleTickerRotation(tickerItems);
+}
 
-    const current = tickerItems[currentTickerIndex];
-    const nextIndex = (currentTickerIndex + 1) % tickerItems.length;
-    const next = tickerItems[nextIndex];
+const TICKER_DWELL_MS = 5000;
+
+// Rotate after TICKER_DWELL_MS, but never while the active pane's title carousel is still running
+function scheduleTickerRotation(items) {
+  tickerInterval = setTimeout(function rotate() {
+    // A re-render replaced the panes; its own ticker has taken over
+    if (tickerItems !== items || items.length <= 1) return;
+
+    const current = items[currentTickerIndex];
+    const remaining = titleCarouselRemainingMs(current);
+    if (remaining > 0) {
+      tickerInterval = setTimeout(rotate, remaining);
+      return;
+    }
+
+    const nextIndex = (currentTickerIndex + 1) % items.length;
+    const next = items[nextIndex];
 
     current.classList.remove("active");
     current.classList.add("exit");
 
-    setTimeout(() => {
+    tickerInterval = setTimeout(() => {
+      if (tickerItems !== items) return;
       current.classList.remove("exit");
       next.classList.add("active");
       currentTickerIndex = nextIndex;
+      restartTitleCarousel(next);
+      scheduleTickerRotation(items);
     }, 400);
-  }, 5000);
+  }, TICKER_DWELL_MS);
+}
+
+// Play an upcoming pane's title carousel from the start (it runs once, then holds at the end)
+function restartTitleCarousel(pane) {
+  const title = pane.querySelector(".large-title.scrolling-upcoming");
+  if (!title) return;
+  title.classList.remove("scrolling-upcoming");
+  void title.offsetWidth; // force reflow so the animation starts over
+  title.classList.add("scrolling-upcoming");
+  title.dataset.carouselEnds = Date.now() + Number(title.dataset.carouselMs);
+}
+
+function titleCarouselRemainingMs(pane) {
+  const title = pane.querySelector(".large-title.scrolling-upcoming");
+  if (!title) return 0;
+  return Math.max(0, Number(title.dataset.carouselEnds) - Date.now());
 }
 
 function startTicker() {
@@ -684,7 +717,7 @@ function startTicker() {
 
 function stopTicker() {
   if (tickerInterval) {
-    clearInterval(tickerInterval);
+    clearTimeout(tickerInterval);
     tickerInterval = null;
   }
 
@@ -759,6 +792,10 @@ function setupScrollingTitle(teamElement, titleText, isUpcoming = false) {
       teamElement.style.setProperty("--scroll-distance", `-${scrollDistance}px`);
       teamElement.style.setProperty("--scroll-duration", `${totalSeconds}s`);
       teamElement.classList.add(isUpcoming ? "scrolling-upcoming" : "scrolling");
+
+      // The Upcoming ticker waits for this to finish before rotating (see scheduleTickerRotation)
+      teamElement.dataset.carouselMs = totalSeconds * 1000;
+      teamElement.dataset.carouselEnds = Date.now() + totalSeconds * 1000;
     }, delay);
   });
 }

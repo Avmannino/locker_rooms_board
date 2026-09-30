@@ -308,6 +308,12 @@ body {
   animation: title-carousel var(--scroll-duration, 10s) ease-in-out infinite;
 }
 
+/* While the Upcoming ticker rotates, play once per turn and hold at the end (restarted by restartTitleCarousel) */
+#upcomingContainer.ticker .large-title.scrolling-upcoming .team-text {
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
 @keyframes title-carousel {
   /* Hold, slide to the end, hold, then the loop restart snaps back to the start */
   0%,
